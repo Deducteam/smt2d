@@ -1,36 +1,12 @@
 (* AST corresponding to veriT proof traces, using smtlib2 terms *)
 
-
-type smtterm =
-  | Var of symbol
-  | Fun of symbol * smtterm list
-  | Let of smtvarbinding list * smtterm
-  | Core of smtcore
-
-and smtvarbinding =
-  | Varbinding of symbol * smtterm
-
-and smtcore =
-  | True
-  | False
-  | Not of smtterm
-  | Imply of smtterm list
-  | And of smtterm list
-  | Or of smtterm list
-  | Xor of smtterm list
-  | Eq of smtterm list
-  | Distinct of smtterm list
-  | Ite of smtterm * smtterm * smtterm
-
-----
-
 (* Tokens *)
 
 type numeral = int
 type decimal = string
 type hexadecimal = string
 type binary = string
-type string = string_token
+type string = string_smt
 type symbol = string
 type keyword = string
 
@@ -41,7 +17,7 @@ type spec_constant =
   | Decimal of decimal
   | Hexadecimal of hexadecimal
   | Binary of binary
-  | String of string_token
+  | String of string_smt
 
 type s_expr =
   | Spec_constant_expr of spec_constant
@@ -64,9 +40,25 @@ type attribute_value =
   | Symbol_value of symbol
   | S_expr_list_value of s_expr list 
 
-type attribute =
-  | Keyword of keyword
-  | Set of keyword * attribute_value
+type attribute = keyword * attribute_value option
+
+(* Terms *)
+
+type qual_identifier = identifier * sort option
+
+type var_binding = symbol * term
+
+type sorted_var = symbol * sort 
+
+type term =
+  | Spec_constant_term of spec_constant
+  | App of qual_identifier * term list
+  | Let of var_binding list * term
+  | Forall of sorted_var list * term
+  | Exists of sorted_var list * term
+  | Attributed of term * attribute list
+
+(* Theories and logics not implemented *)
 
 (* Command options *)
 
@@ -80,11 +72,23 @@ type option =
   | Produce_unsat_cores of b_value
   | Produce_models of b_value
   | Produce_assignments of b_value
-  | Regular_output_channel of string_token
-  | Diagnostic_output_channel of string_token
+  | Regular_output_channel of string_smt
+  | Diagnostic_output_channel of string_smt
   | Random_seed of numeral
   | Verbosity of numeral
   | Attibute of attribute
+
+(* Info flags *)
+
+type info_flag =
+  | Error_behavior
+  | Name
+  | Authors
+  | Version
+  | Status
+  | Reason_unknown
+  | Keyword_flag of keyword
+  | All_statistics
 
 (* Commands *)
 
@@ -94,16 +98,19 @@ type command =
   | Set_info of attribute
   | Declare_sort of symbol * numeral
   | Define_sort of symbol * symbol list * sort
-  | Declare_fun (* continuer ici *)
-  | Define_fun
-  | Push
-  | Pop
-  | Assert
+  | Declare_fun of symbol * sort list * sort
+  | Define_fun of symbol * sorted_var list * sort * term
+  | Push of numeral
+  | Pop of numeral
+  | Assert of term
   | Check_sat
   | Get_assertions
-  | Get_values
   | Get_proof
   | Get_unsat_core
-  | Get_info
-  | Get_option
+  | Get_value of term list
+  | Get_assignment
+  | Get_option of keyword
+  | Get_info of info_flag
   | Exit
+
+type script = command list
