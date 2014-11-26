@@ -2,7 +2,7 @@
 
 (* Tokens *)
 
-type numeral = int
+type numeral = string
 type decimal = string
 type hexadecimal = string
 type binary = string
@@ -29,7 +29,7 @@ type s_expr =
 
 type identifier = symbol * numeral list
 
-(* Sorts *)
+(* Sorts - including parametric sorts *)
 
 type sort = Sort of identifier * sort list
 

@@ -2,7 +2,7 @@
 
 (* Tokens *)
 
-type numeral = int
+type numeral = string
 type decimal = string
 type hexadecimal = string
 type binary = string
@@ -44,12 +44,18 @@ type attribute = keyword * attribute_value option
 
 (* Terms *)
 
-type term =
+type qual_identifier = identifier * sort option
+
+type var_binding = symbol * term
+
+and sorted_var = symbol * sort 
+
+and term =
   | Spec_constant_term of spec_constant
-  | App of identifier * sort option * term list
-  | Let of (symbol * term) list * term
-  | Forall of (symbol * sort) list * term
-  | Exists of (symbol * sort) list * term
+  | App of qual_identifier * term list
+  | Let of var_binding list * term
+  | Forall of sorted_var list * term
+  | Exists of sorted_var list * term
   | Attributed of term * attribute list
 
 (* Theories and logics not implemented *)
@@ -81,7 +87,7 @@ type info_flag =
   | Version
   | Status
   | Reason_unknown
-  | Attribute_flag of keyword
+  | Keyword_flag of keyword
   | All_statistics
 
 (* Commands *)
@@ -93,7 +99,7 @@ type command =
   | Declare_sort of symbol * numeral
   | Define_sort of symbol * symbol list * sort
   | Declare_fun of symbol * sort list * sort
-  | Define_fun of symbol * (symbol * sort) list * sort * term
+  | Define_fun of symbol * sorted_var list * sort * term
   | Push of numeral
   | Pop of numeral
   | Assert of term
