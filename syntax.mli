@@ -6,7 +6,7 @@ type numeral = int
 type decimal = string
 type hexadecimal = string
 type binary = string
-type string = string_smt
+type string_smt = string
 type symbol = string
 type keyword = string
 
@@ -31,7 +31,7 @@ type identifier = symbol * numeral list
 
 (* Sorts *)
 
-type sort = identifier * sort list
+type sort = Sort of identifier * sort list
 
 (* Attributes *)
 
@@ -48,9 +48,9 @@ type qual_identifier = identifier * sort option
 
 type var_binding = symbol * term
 
-type sorted_var = symbol * sort 
+and sorted_var = symbol * sort 
 
-type term =
+and term =
   | Spec_constant_term of spec_constant
   | App of qual_identifier * term list
   | Let of var_binding list * term
