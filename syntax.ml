@@ -106,5 +106,3 @@ type command =
   | Get_option of keyword
   | Get_info of info_flag
   | Exit
-
-type script = command list
