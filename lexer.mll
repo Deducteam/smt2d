@@ -14,10 +14,14 @@ rule token = parse
   | "forall"            { FORALL }
   | "exists"            { EXISTS }
   | '!'                 { ATTRIBUTE }
-  | "par"               { let loc = Error.get_location lexbuf in raise (Error.LexerError loc ) }
-  | "NUMERAL"           { let loc = Error.get_location lexbuf in raise (Error.LexerError loc ) }
-  | "DECIMAL"           { let loc = Error.get_location lexbuf in raise (Error.LexerError loc ) }
-  | "STRING"            { let loc = Error.get_location lexbuf in raise (Error.LexerError loc ) }
+  | "par"
+        { let (s, l, c) = Error.get_location lexbuf in raise (Error.LexerError (s, l, c) ) }
+  | "NUMERAL"
+        { let (s, l, c) = Error.get_location lexbuf in raise (Error.LexerError (s, l, c) ) }
+  | "DECIMAL"
+        { let (s, l, c) = Error.get_location lexbuf in raise (Error.LexerError (s, l, c) ) }
+  | "STRING"
+        { let (s, l, c) = Error.get_location lexbuf in raise (Error.LexerError (s, l, c) ) }
   | "set-logic"         { SET_LOGIC }
   | "set-option"        { SET_OPTION }
   | "set-info"          { SET_INFO }
@@ -47,14 +51,14 @@ rule token = parse
         { HEXADECIMAL s }
   | '#' 'b' ['0' '1']+ as s
         { BINARY s }
-  | '"' (([' '-'~'] # ['\\' '"']) | ('\\' [' '-'~']))* '"' as s
+  | '"' (([' '-'~' '\t' '\r' '\n'] # ['\\' '"']) | ('\\' [' '-'~' '\t' '\r' '\n']))* '"' as s
         { STRING s }
   | ['a'-'z' 'A'-'Z' '+' '-' '/' '*' '=' '%' '?' '!' '.' '$' '_' '~' '&' '^' '<' '>' '@'] ['0'-'9' 'a'-'z' 'A'-'Z' '+' '-' '/' '*' '=' '%' '?' '!' '.' '$' '_' '~' '&' '^' '<' '>' '@']* as s
         { SYMBOL s }
-  | '|' (([' '-'~'] # ['\\' '|'])* as s) '|'
+  | '|' (([' '-'~' '\t' '\r' '\n'] # ['\\' '|'])* as s) '|'
         { SYMBOL s }
   | ':' ['0'-'9' 'a'-'z' 'A'-'Z' '+' '-' '/' '*' '=' '%' '?' '!' '.' '$' '_' '~' '&' '^' '<' '>' '@']+ as s
         { KEYWORD s }
   | _
-        { let loc = Error.get_location lexbuf in raise (Error.LexerError loc ) }
+        { let (s, l, c) = Error.get_location lexbuf in raise (Error.LexerError (s, l, c) ) }
       

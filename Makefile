@@ -4,7 +4,7 @@ all: smt2check
 
 smt2check: *.ml *.mli *.mll *.mly
 	ocamlbuild smt2check.native
-	mv smt2check.native verine
+	mv smt2check.native smt2check
 
 clean:
 	rm -f smt2check *~ *\#

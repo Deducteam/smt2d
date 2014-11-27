@@ -6,10 +6,10 @@ let argspec = []
 
 let parse_and_check out lexbuf = 
   try
-    let rec parse_command = 
+    let rec parse_command () = 
       let _ = Parser.command Lexer.token lexbuf in
-      parse_command in
-    parse_command
+      parse_command () in
+    parse_command ()
   with 
   | Error.EndOfFile -> fprintf out "OK"
   | Parsing.Parse_error -> 

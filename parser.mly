@@ -26,7 +26,7 @@ GET_VALUE GET_ASSIGNMENT GET_OPTION GET_INFO EXIT
 
 numeral_plus:
   | NUMERAL                 { [$1] }
-  | NUMERAL numeral_star    { $1 :: $2 }
+  | NUMERAL numeral_plus    { $1 :: $2 }
 ;
 
 symbol_star:
@@ -39,17 +39,17 @@ spec_constant:
   | DECIMAL        { Decimal $1 }
   | HEXADECIMAL    { Hexadecimal $1 }
   | BINARY         { Binary $1 }
-  | STRING         { String_smt $1 }
+  | STRING         { String $1 }
 ;
 
-s_expr
+s_expr:
   | spec_constant             { Spec_constant_expr $1 }
-  | symbol                    { Symbol_expr $1 }
-  | keyword                   { Keyword_expr $1 }
+  | SYMBOL                    { Symbol_expr $1 }
+  | KEYWORD                   { Keyword_expr $1 }
   | OPEN s_expr_star CLOSE    { List_expr $2 }
 ;
 
-s_expr_star
+s_expr_star:
   |                       { [] }
   | s_expr s_expr_star    { $1 :: $2 }
 ;
@@ -66,7 +66,7 @@ sort:
 
 sort_star:
   |                   { [] }
-  | sort sort_plus    { $1 :: $2 }
+  | sort sort_star    { $1 :: $2 }
 ;
 
 sort_plus:
@@ -99,7 +99,7 @@ var_binding:
   | OPEN SYMBOL term CLOSE    { ($2,$3) }
 ;
 
-var_binding_plus
+var_binding_plus:
   | var_binding                     { [$1] }
   | var_binding var_binding_plus    { $1 :: $2 }
 ;
@@ -147,7 +147,7 @@ info_flag:
 
 command:
   | OPEN SET_LOGIC SYMBOL CLOSE                                        { Set_logic $3 }
-  | OPEN SET_OPTION option CLOSE                                       { Set_option $3 }
+  | OPEN SET_OPTION command_option CLOSE                                       { Set_option $3 }
   | OPEN SET_INFO attribute CLOSE                                      { Set_info $3 }
   | OPEN DECLARE_SORT SYMBOL NUMERAL CLOSE                             { Declare_sort ($3,$4) }
   | OPEN DEFINE_SORT SYMBOL OPEN symbol_star CLOSE sort CLOSE          { Define_sort ($3,$5,$7) }

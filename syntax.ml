@@ -21,7 +21,7 @@ type spec_constant =
 type s_expr =
   | Spec_constant_expr of spec_constant
   | Symbol_expr of symbol
-  | Keywork_expr of keyword
+  | Keyword_expr of keyword
   | List_expr of s_expr list
 
 (* Identifier *)

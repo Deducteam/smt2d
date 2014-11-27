@@ -1,2 +1,5 @@
 test
 .merlin
+*~
+_build/
+smt2check
