@@ -6,7 +6,6 @@ type numeral = string
 type decimal = string
 type hexadecimal = string
 type binary = string
-type string_smt = string
 type symbol = string
 type keyword = string
 
@@ -17,7 +16,7 @@ type spec_constant =
   | Decimal of decimal
   | Hexadecimal of hexadecimal
   | Binary of binary
-  | String of string_smt
+  | String of string
 
 type s_expr =
   | Spec_constant_expr of spec_constant
@@ -46,55 +45,36 @@ type attribute = keyword * attribute_value option
 
 type qual_identifier = identifier * sort option
 
-type var_binding = symbol * term
+type sorted_var = symbol * sort
 
-and sorted_var = symbol * sort 
+type var_binding = symbol * term
 
 and term =
   | Spec_constant_term of spec_constant
-  | App of qual_identifier * term list
-  | Let of var_binding list * term
-  | Forall of sorted_var list * term
-  | Exists of sorted_var list * term
-  | Attributed of term * attribute list
+  | Qual_identifier_term of qual_identifier
+  | App_term of qual_identifier * term list
+  | Let_term of var_binding list * term
+  | Forall_term of sorted_var list * term
+  | Exists_term of sorted_var list * term
+  | Attributed_term of term * attribute list
 
 (* Theories and logics not implemented *)
 
 (* Command options *)
 
-type b_value = True | False
+type b_value = string
 
-type option =
-  | Print_success of b_value
-  | Expand_definitions of b_value
-  | Interactive_mode of b_value
-  | Produce_proofs of b_value
-  | Produce_unsat_cores of b_value
-  | Produce_models of b_value
-  | Produce_assignments of b_value
-  | Regular_output_channel of string_smt
-  | Diagnostic_output_channel of string_smt
-  | Random_seed of numeral
-  | Verbosity of numeral
-  | Attibute of attribute
+type command_option = attribute
 
 (* Info flags *)
 
-type info_flag =
-  | Error_behavior
-  | Name
-  | Authors
-  | Version
-  | Status
-  | Reason_unknown
-  | Keyword_flag of keyword
-  | All_statistics
+type info_flag = keyword
 
 (* Commands *)
 
 type command =
   | Set_logic of symbol
-  | Set_option of option
+  | Set_option of command_option
   | Set_info of attribute
   | Declare_sort of symbol * numeral
   | Define_sort of symbol * symbol list * sort
@@ -112,3 +92,5 @@ type command =
   | Get_option of keyword
   | Get_info of info_flag
   | Exit
+
+type script = command list
