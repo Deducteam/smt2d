@@ -1,4 +1,4 @@
-(* AST corresponding to veriT proof traces, using smtlib2 terms *)
+(* smtlib2 concrete syntax *)
 
 (* Tokens *)
 
@@ -28,7 +28,7 @@ type s_expr =
 
 type identifier = symbol * numeral list
 
-(* Sorts - including parametric sorts *)
+(* Sorts *)
 
 type sort = Sort of identifier * sort list
 
