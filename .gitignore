@@ -3,3 +3,5 @@ test
 *~
 _build/
 smt2check
+smtlib2
+bench
