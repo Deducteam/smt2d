@@ -5,20 +5,20 @@ BENCHDIR = bench
 BENCHSMTS = $(shell find $(BENCHDIR) -name "*.smt2")
 BENCHCHECKS_NEEDED = $(BENCHSMTS:.smt2=.chk)
 
-all: smt2check
+all: check
 
-smt2check: *.ml *.mli *.mll *.mly
-	ocamlbuild smt2check.native
-	mv smt2check.native smt2check
+check: *.ml *.mli *.mll *.mly
+	ocamlbuild check.native
+	mv check.native check
 
 clean:
-	rm -f smt2check *~ *\#
+	rm -f check *~ *\#
 	ocamlbuild -clean
 
 %.chk: %.smt2
-	./smt2check $<
+	./check $<
 
-bench: smt2check $(BENCHDIR)/.dummy $(BENCHCHECKS_NEEDED)
+bench: check $(BENCHDIR)/.dummy $(BENCHCHECKS_NEEDED)
 
 $(BENCHDIR)/.dummy:
 	[ -e $(BENCHIR) ] || mkdir $(BENCHDIR)
