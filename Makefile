@@ -1,4 +1,4 @@
-.PHONY: all clean bench
+.PHONY: all clean bench cleanbench
 
 SMTLIBDIR = smtlib2/QF_UF
 BENCHDIR = bench
