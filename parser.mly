@@ -133,10 +133,6 @@ term_plus:
   | term term_plus    { $1 :: $2 }
 ;
 
-b_value:
-  | SYMBOL    { $1 }
-;
-
 command_option:
   | attribute    { $1 }
 ;
@@ -165,12 +161,12 @@ command:
   | OPEN GET_OPTION KEYWORD CLOSE                                      { Get_option $3 }
   | OPEN GET_INFO info_flag CLOSE                                      { Get_info $3 }
   | OPEN EXIT CLOSE                                                    { Exit }
-  | EOF                                                                { raise Error.EndOfFile }
+  | EOF                                                                { raise Error.End_of_file }
 ;
 
 script:
-  | command script    { $1 :: $2 }
   | EOF               { [] }
+  | command script    { $1 :: $2 }
 ;
 
 %%

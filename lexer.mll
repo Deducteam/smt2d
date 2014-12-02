@@ -14,8 +14,16 @@
       let l = String.length s in 
       if n < l-1 then
 	match s.[n], s.[n+1] with
-	| '\\', '"' -> String.fill s n 2 '"'; iter_escape s n
-	| '\\', '\\' -> String.fill s n 2 '\\'; iter_escape s n
+	| '\\', '"' ->
+	   let s =
+	     String.concat
+	       "\"" [String.sub s 0 n; String.sub s (n+2) (l-(n+2))] in
+	   iter_escape s n
+	| '\\', '\\' ->
+	   let s =
+	     String.concat
+	       "\\" [String.sub s 0 n; String.sub s (n+2) (l-(n+2))] in
+	   iter_escape s n
 	| _, _ -> iter_escape s (n+1)
       else s in
     iter_escape s 0
@@ -33,13 +41,13 @@ rule token = parse
   | "exists"            { EXISTS }
   | '!'                 { ATTRIBUTE }
   | "par"
-        { let (s, l, c) = Error.get_location lexbuf in raise (Error.LexerError (s, l, c) ) }
+        { let (s, l, c) = Error.get_location lexbuf in raise (Error.Lexer_error (s, l, c) ) }
   | "NUMERAL"
-        { let (s, l, c) = Error.get_location lexbuf in raise (Error.LexerError (s, l, c) ) }
+        { let (s, l, c) = Error.get_location lexbuf in raise (Error.Lexer_error (s, l, c) ) }
   | "DECIMAL"
-        { let (s, l, c) = Error.get_location lexbuf in raise (Error.LexerError (s, l, c) ) }
+        { let (s, l, c) = Error.get_location lexbuf in raise (Error.Lexer_error (s, l, c) ) }
   | "STRING"
-        { let (s, l, c) = Error.get_location lexbuf in raise (Error.LexerError (s, l, c) ) }
+        { let (s, l, c) = Error.get_location lexbuf in raise (Error.Lexer_error (s, l, c) ) }
   | "set-logic"         { SET_LOGIC }
   | "set-option"        { SET_OPTION }
   | "set-info"          { SET_INFO }
@@ -78,4 +86,4 @@ rule token = parse
   | ':' ['0'-'9' 'a'-'z' 'A'-'Z' '+' '-' '/' '*' '=' '%' '?' '!' '.' '$' '_' '~' '&' '^' '<' '>' '@']+ as s
         { KEYWORD s }
   | _
-        { let (s, l, c) = Error.get_location lexbuf in raise (Error.LexerError (s, l, c) ) }
+        { let (s, l, c) = Error.get_location lexbuf in raise (Error.Lexer_error (s, l, c) ) }

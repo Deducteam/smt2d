@@ -1,7 +1,6 @@
-test
 .merlin
 *~
 _build/
-smt2check
+check
 smtlib2
 bench
