@@ -1,72 +1,24 @@
-(* smtlib2 terms abstract syntax *)
+(* smtlib2 abstract syntax *)
 
-(* *** STRUCTURES KEPT FROM CONCRETE SYNTAX *** *)
+module Old = Concrete
 
-(* TOKENS *)
-
-type numeral = string
-type decimal = string
-type hexadecimal = string
-type binary = string
-type symbol = string
-type keyword = string
-
-(* S-expressions *)
-
-type spec_constant =
-  | Numeral of numeral
-  | Decimal of decimal
-  | Hexadecimal of hexadecimal
-  | Binary of binary
-  | String of string
-
-type s_expr =
-  | Spec_constant_expr of spec_constant
-  | Symbol_expr of symbol
-  | Keyword_expr of keyword
-  | List_expr of s_expr list
-
-(* Identifier *)
-
-type identifier = symbol * numeral list
-
-(* Attributes *)
-
-type attribute_value =
-  | Spec_constant_value of spec_constant
-  | Symbol_value of symbol
-  | S_expr_list_value of s_expr list 
-
-(* *** NEW STRUCTURES *** *)
-
-type sort_symbol =
-  | Bool
-  | Identifier_sort of identifier
+type sort_symbol = Old.identifier
 type fun_symbol =
-  | True
-  | False
-  | Not
-  | Imply
-  | And
-  | Or
-  | Xor
-  | Eq
-  | Distinct
-  | Ite
-  | Spec_constant_fun of spec_constant
-  | Identifier_fun of identifier
-type attribute_name = keyword
-type sort_parameter = symbol
-type variable = symbol
-
+  | Spec_constant_fun of Old.spec_constant
+  | Identifier_fun of Old.identifier
+type attribute_name = Old.keyword
+type sort_parameter = Old.symbol
+type variable = Old.symbol
+type attribute_value = Old.attribute_value
+    
 (* Sorts *)
 
 type sort = 
   | Sort of sort_symbol * sort list
 
 type parametric_sort =
-  | Parameter of sort_parameter
-  | Parametric_sort of parametric_sort
+  | Par of sort_parameter
+  | P_sort of sort_symbol * parametric_sort list
 
 (* Terms *)
 
@@ -79,3 +31,13 @@ type term =
   | Forall of (variable * sort) list * term
   | Exists of (variable * sort) list * term
   | Attributed of term * attribute list
+
+(* *** FUNCTIONS *** *)
+
+let sort_sym s = s, []				   
+let fun_sym s = Identifier_fun (s, [])
+
+(* Sorts *)
+			       
+let par s = Par s
+let p_sort sort_sym p_sorts = P_sort (sort_sym, p_sorts)

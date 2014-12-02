@@ -17,8 +17,7 @@
 DEFINE_FUN PUSH POP ASSERT CHECK_SAT GET_ASSERTIONS GET_PROOF GET_UNSAT_CORE 
 GET_VALUE GET_ASSIGNMENT GET_OPTION GET_INFO EXIT
 
-%start script command term
-%type <Concrete.script> script
+%start command term
 %type <Concrete.command> command
 %type <Concrete.term> term
   
@@ -162,11 +161,6 @@ command:
   | OPEN GET_INFO info_flag CLOSE                                      { Get_info $3 }
   | OPEN EXIT CLOSE                                                    { Exit }
   | EOF                                                                { raise Error.End_of_file }
-;
-
-script:
-  | EOF               { [] }
-  | command script    { $1 :: $2 }
 ;
 
 %%
