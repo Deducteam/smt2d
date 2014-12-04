@@ -1,2 +1,1 @@
-vérifier que les symboles définis ou déclarés hors théories ne jamais surchargés (cf doc)
-separate script to script.ml
+sortir enlever logic_context de context ?

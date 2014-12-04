@@ -1,5 +1,6 @@
 %{
   open Concrete
+  open Script
 %}
 
 %token EOF
@@ -18,7 +19,7 @@ DEFINE_FUN PUSH POP ASSERT CHECK_SAT GET_ASSERTIONS GET_PROOF GET_UNSAT_CORE
 GET_VALUE GET_ASSIGNMENT GET_OPTION GET_INFO EXIT
 
 %start command term
-%type <Concrete.command> command
+%type <Script.command> command
 %type <Concrete.term> term
   
 %%
@@ -160,7 +161,7 @@ command:
   | OPEN GET_OPTION KEYWORD CLOSE                                      { Get_option $3 }
   | OPEN GET_INFO info_flag CLOSE                                      { Get_info $3 }
   | OPEN EXIT CLOSE                                                    { Exit }
-  | EOF                                                                { raise Error.End_of_file }
+  | EOF                                                                { raise End_of_file }
 ;
 
 %%
