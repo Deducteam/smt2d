@@ -1,11 +1,14 @@
 (* smtlib2 abstract syntax *)
 
+type number = int
 type sort_symbol
 type fun_symbol
 type attribute_name
+type theory_name
 type sort_parameter
 type variable
 type attribute_value
+type logic_name
 
 (* Sorts *)
 
@@ -14,7 +17,7 @@ type sort =
 
 type parametric_sort =
   | Par of sort_parameter
-  | P_sort of sort_symbol * parametric_sort list
+  | Par_sort of sort_symbol * parametric_sort list
 
 (* Terms *)
 
@@ -28,10 +31,48 @@ type term =
   | Exists of (variable * sort) list * term
   | Attributed of term * attribute list
 
-(* *** FUNCTIONS *** *)
+(* Theories *)
 
-val sort_sym: string -> sort_symbol
-val fun_sym: string -> fun_symbol
-				   
-val par: string -> parametric_sort
-val p_sort: sort_symbol -> parametric_sort list -> parametric_sort
+type sort_declaration = sort_symbol * number * attribute list
+
+type par_fun_declaration = 
+    sort_parameter list * fun_symbol * parametric_sort list * parametric_sort * attribute list
+
+type theory_declaration = theory_name * sort_declaration list * par_fun_declaration list
+
+(* Logics *)
+
+type logic_declaration = logic_name * theory_name list
+
+(* *** CONSTANTS *** *)
+
+val core_declaration: theory_declaration
+val qf_uf_declaration: logic_declaration  
+
+(* *** ENVIRONMENT *** *)
+
+type sort_data
+type fun_data
+type environment
+
+val add_sort: sort_symbol -> sort_data -> environment -> environment
+val add_fun: fun_symbol -> fun_data -> environment -> environment
+
+(* *** SCOPING *** *)
+
+val logic_environment: Concrete.symbol -> environment
+
+val declare_sort: Concrete.symbol -> Concrete.numeral -> sort_symbol * sort_data
+
+val define_sort: Concrete.symbol -> Concrete.symbol list -> Concrete.sort -> environment -> 
+		 sort_symbol * sort_data
+
+val declare_fun: Concrete.symbol -> Concrete.sort list -> Concrete.sort -> environment -> 
+		 fun_symbol * fun_data
+
+val define_fun: Concrete.symbol -> Concrete.sorted_var list -> Concrete.sort -> 
+			Concrete.term -> environment -> (fun_symbol * fun_data) list
+							
+val in_line_assert: Concrete.term -> environment -> (fun_symbol * fun_data) list * term
+
+val in_line_get_value: Concrete.term list -> environment -> (fun_symbol * fun_data) list

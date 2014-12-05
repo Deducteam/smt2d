@@ -1,4 +1,4 @@
-(* smtlib2 terms concrete syntax *)
+(* smtlib2 concrete syntax *)
 
 (* Tokens *)
 
@@ -57,3 +57,38 @@ and term =
   | Forall_term of sorted_var list * term
   | Exists_term of sorted_var list * term
   | Attributed_term of term * attribute list
+
+(* Command options *)
+
+type b_value = string
+
+type command_option = attribute
+
+(* Info flags *)
+
+type info_flag = keyword
+
+(* Commands *)
+
+type command =
+  | Set_logic of symbol
+  | Set_option of command_option
+  | Set_info of attribute
+  | Declare_sort of symbol * numeral
+  | Define_sort of symbol * symbol list * sort
+  | Declare_fun of symbol * sort list * sort
+  | Define_fun of symbol * sorted_var list * sort * term
+  | Push of numeral
+  | Pop of numeral
+  | Assert of term
+  | Check_sat
+  | Get_assertions
+  | Get_proof
+  | Get_unsat_core
+  | Get_value of term list
+  | Get_assignment
+  | Get_option of keyword
+  | Get_info of info_flag
+  | Exit
+
+type script = command list

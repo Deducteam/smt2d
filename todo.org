@@ -1,1 +1,1 @@
-sortir enlever logic_context de context ?
+sortir les données de Core et Qf_uf de abstract ?

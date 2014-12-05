@@ -1,6 +1,5 @@
 %{
   open Concrete
-  open Script
 %}
 
 %token EOF
@@ -19,7 +18,7 @@ DEFINE_FUN PUSH POP ASSERT CHECK_SAT GET_ASSERTIONS GET_PROOF GET_UNSAT_CORE
 GET_VALUE GET_ASSIGNMENT GET_OPTION GET_INFO EXIT
 
 %start command term
-%type <Script.command> command
+%type <Concrete.command> command
 %type <Concrete.term> term
   
 %%
