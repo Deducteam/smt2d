@@ -52,66 +52,6 @@ type theory_declaration = theory_name * sort_declaration list * par_fun_declarat
 
 type logic_declaration = logic_name * theory_name list
 
-(* *** CONSTANTS *** *)
-
-let core_declaration =
-  Core, 
-  [("Bool", []), 0, []], 
-  [ [], 
-    Identifier_fun ("true", []),
-    [],
-    Par_sort (("Bool", []), []), 
-    []
-  ; [], 
-    Identifier_fun ("false", []),
-    [],
-    Par_sort (("Bool", []), []),
-    []
-  ; [], 
-    Identifier_fun ("not", []),
-    [Par_sort (("Bool", []), [])],
-    Par_sort (("Bool", []), []),
-    []
-  ; [], 
-    Identifier_fun ("=>", []), 
-    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
-    Par_sort (("Bool", []), []),
-    []
-  ; [], 
-    Identifier_fun ("and", []),
-    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
-    Par_sort (("Bool", []), []),
-    []
-  ; [], 
-    Identifier_fun ("or", []),
-    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
-    Par_sort (("Bool", []), []),
-    []
-  ; [], 
-    Identifier_fun ("xor", []),
-    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
-    Par_sort (("Bool", []), []),
-    []
-  ; ["A"],
-    Identifier_fun ("=", []), 
-    [Par "A"; Par "A"], 
-    Par_sort (("Bool", []), []),
-    []
-  ; ["A"],
-    Identifier_fun ("distinct", []), 
-    [Par "A"; Par "A"], 
-    Par_sort (("Bool", []), []),
-    []
-  ; ["A"],
-    Identifier_fun ("ite", []), 
-    [Par_sort (("Bool", []), []); Par "A"; Par "A"], 
-    Par "A",
-    []
-  ]
-
-let qf_uf_declaration = 
-  Qf_uf, [Core]
-
 (* *** SIGNATURES *** *)
 
 type sort_data =
@@ -184,11 +124,73 @@ let overload_fun sym data signature =
 let number num =
   int_of_string num
 
+let sort_symbol sym =
+  sym, []
+
 let logic_name sym =
   match sym with
   | "QF_UF" -> Qf_uf
   | _ -> raise Logic_error
 
+(* *** CONSTANTS *** *)
+
+let core_declaration =
+  Core, 
+  [("Bool", []), 0, []], 
+  [ [], 
+    Identifier_fun ("true", []),
+    [],
+    Par_sort (("Bool", []), []), 
+    []
+  ; [], 
+    Identifier_fun ("false", []),
+    [],
+    Par_sort (("Bool", []), []),
+    []
+  ; [], 
+    Identifier_fun ("not", []),
+    [Par_sort (("Bool", []), [])],
+    Par_sort (("Bool", []), []),
+    []
+  ; [], 
+    Identifier_fun ("=>", []), 
+    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
+    Par_sort (("Bool", []), []),
+    []
+  ; [], 
+    Identifier_fun ("and", []),
+    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
+    Par_sort (("Bool", []), []),
+    []
+  ; [], 
+    Identifier_fun ("or", []),
+    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
+    Par_sort (("Bool", []), []),
+    []
+  ; [], 
+    Identifier_fun ("xor", []),
+    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
+    Par_sort (("Bool", []), []),
+    []
+  ; ["A"],
+    Identifier_fun ("=", []), 
+    [Par "A"; Par "A"], 
+    Par_sort (("Bool", []), []),
+    []
+  ; ["A"],
+    Identifier_fun ("distinct", []), 
+    [Par "A"; Par "A"], 
+    Par_sort (("Bool", []), []),
+    []
+  ; ["A"],
+    Identifier_fun ("ite", []), 
+    [Par_sort (("Bool", []), []); Par "A"; Par "A"], 
+    Par "A",
+    []
+  ]
+
+let qf_uf_declaration = 
+  Qf_uf, [Core]
 
 (* *** ASSERTION SETS *** *)
 
@@ -241,9 +243,9 @@ let rec pop n stack =
      pop (n-1) other
 
 (* assert that the stack has a head and replaces it by (f head) *)
-let apply_to_current f stack =
+let apply_to_signature f stack =
   match stack with
-  | current :: other -> (f current) :: other
+  | (current, assertions) :: other -> (f current, assertions) :: other
   | [] -> assert false
 
 let run_command command stack =
@@ -252,8 +254,10 @@ let run_command command stack =
      let n = number num in push n stack
   | Concrete.Pop num ->
      let n = number num in pop n stack
-  | Concrete.Declare_sort (sym, n) ->
-     raise Error.Not_implemented
+  | Concrete.Declare_sort (sym, num) ->
+     let sort = sort_symbol sym in
+     let n = number num in
+     apply_to_signature (add_sort sort (Sort_declaration n)) stack
   | Concrete.Define_sort (sym, syms, tau) ->
      raise Error.Not_implemented
   | Concrete.Declare_fun (sym, sorts, sort) ->

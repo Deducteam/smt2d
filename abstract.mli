@@ -44,11 +44,6 @@ type theory_declaration = theory_name * sort_declaration list * par_fun_declarat
 
 type logic_declaration = logic_name * theory_name list
 
-(* *** CONSTANTS *** *)
-
-val core_declaration: theory_declaration
-val qf_uf_declaration: logic_declaration  
-
 (* *** SIGNATURES *** *)
 
 (* type sort_data *)
@@ -61,6 +56,11 @@ type signature
 (* *** CONCRETE TO ABSTRACT *** *)
 
 val logic_name: Concrete.symbol -> logic_name
+
+(* *** CONSTANTS *** *)
+
+val core_declaration: theory_declaration
+val qf_uf_declaration: logic_declaration  
 
 (* *** ASSERTION SETS *** *)
 
