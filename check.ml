@@ -6,10 +6,38 @@ let files = ref []
 
 let argspec = []
 
+let check_get_script file = 
+  let chan = open_in file in
+  let lexbuf = Lexing.from_channel chan in
+  try
+    let _ = Context.get_script lexbuf in ()
+  with Parsing.Parse_error ->
+    let (s, l, c) = Error.get_location lexbuf in
+    raise (Error.Parser_error (s, l, c))
+	  
+let check_get_logic_signature file =
+  let chan = open_in file in
+  let lexbuf = Lexing.from_channel chan in
+  try
+    let _ = Context.get_logic_signature lexbuf in ()
+  with Parsing.Parse_error ->
+    let (s, l, c) = Error.get_location lexbuf in
+    raise (Error.Parser_error (s, l, c))
+
+let check_get_contexts file =
+  let chan = open_in file in
+  let lexbuf = Lexing.from_channel chan in
+  try
+    let _ = Context.get_contexts lexbuf in ()
+  with Parsing.Parse_error ->
+    let (s, l, c) = Error.get_location lexbuf in
+    raise (Error.Parser_error (s, l, c))
+
 let check_file file = 
   fprintf stdout "checking file %s: " file;
-  Context.check_parse file;
-  Context.check_context file;
+  check_get_script file;
+  check_get_logic_signature file;
+  check_get_contexts file;
   fprintf stdout "OK\n"
   
 let () =

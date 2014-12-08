@@ -1,3 +1,7 @@
-val check_parse: string -> unit
+type context
 
-val check_context: string -> unit
+val get_script: Lexing.lexbuf -> Concrete.script
+
+val get_logic_signature: Lexing.lexbuf -> Abstract.signature
+
+val get_contexts: Lexing.lexbuf -> context list

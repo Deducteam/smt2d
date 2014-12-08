@@ -1,7 +1,7 @@
 (* smtlib2 abstract syntax *)
 
 exception Logic_error
-exception Environment_error
+exception Signature_error
 
 type number = int
 type sort_symbol = Concrete.identifier
@@ -111,7 +111,7 @@ let core_declaration =
 let qf_uf_declaration = 
   Qf_uf, [Core]
 
-(* *** ENVIRONMENT *** *)
+(* *** SIGNATURES *** *)
 
 type sort_data =
   | Sort_declaration of int
@@ -136,47 +136,47 @@ module FunsMap =
       let compare = Pervasives.compare
     end)
 
-module VarsMap = 
-  Map.Make
-    (struct
-      type t = variable
-      let compare = Pervasives.compare
-    end)      
+(* module VarsMap =  *)
+(*   Map.Make *)
+(*     (struct *)
+(*       type t = variable *)
+(*       let compare = Pervasives.compare *)
+(*     end)       *)
 
-(* one can infer a signature from a environment by removing all definitions *)
-type environment = {
+(* one can infer a signature from a signature by removing all definitions *)
+type signature = {
   sorts: sort_data SortsMap.t;
   funs: fun_data FunsMap.t;
-  vars: sort VarsMap.t }
+}
 
-let add_sort sym data environment = 
-  { sorts = 
-      if SortsMap.mem sym environment.sorts
-      then raise Environment_error
-      else SortsMap.add sym data environment.sorts;
-    funs = environment.funs;
-    vars = environment.vars }
+let add_sort sym data signature =
+  { sorts =
+      if SortsMap.mem sym signature.sorts
+      then raise Signature_error
+      else SortsMap.add sym data signature.sorts;
+    funs = signature.funs;
+  }
 
-let add_fun sym data environment = 
-  { sorts = environment.sorts;
-    funs = 
-      if FunsMap.mem sym environment.funs
-      then raise Environment_error
-      else FunsMap.add sym data environment.funs;
-    vars = environment.vars }
+let add_fun sym data signature =
+  { sorts = signature.sorts;
+    funs =
+      if FunsMap.mem sym signature.funs
+      then raise Signature_error
+      else FunsMap.add sym data signature.funs;
+  }
 
-let add_fun_overload sym data environment =
-  { sorts = environment.sorts;
-    funs = 
-      if FunsMap.mem sym environment.funs
-      then 
-	let envdata = FunsMap.find sym environment.funs in
+let overload_fun sym data signature =
+  { sorts = signature.sorts;
+    funs =
+      if FunsMap.mem sym signature.funs
+      then
+	let envdata = FunsMap.find sym signature.funs in
 	match envdata, data with
-	| Fun_declaration l1, Fun_declaration l2 -> 
-	   FunsMap.add sym (Fun_declaration (l1@l2)) environment.funs
-	| _, _ -> raise Environment_error
-      else FunsMap.add sym data environment.funs;
-    vars = environment.vars }
+	| Fun_declaration l1, Fun_declaration l2 ->
+	   FunsMap.add sym (Fun_declaration (l1@l2)) signature.funs
+	| _, _ -> raise Signature_error
+      else FunsMap.add sym data signature.funs;
+  }
 
 (* *** SCOPING *** *)
 
@@ -188,13 +188,13 @@ let logic_declaration logic_name =
   match logic_name with
   | Qf_uf -> qf_uf_declaration 
 
-let environment logic_name =
+let signature logic_name =
   let _, theory_names = logic_declaration logic_name in
   let theory_declarations = List.map theory_declaration theory_names in
   let empty = 
   { sorts = SortsMap.empty;
     funs = FunsMap.empty;
-    vars = VarsMap.empty } in
+  } in
   List.fold_left 
     (fun env (_, sort_declarations, par_fun_declarations) -> 
      let newenv = 
@@ -203,29 +203,11 @@ let environment logic_name =
 	 env sort_declarations in
      List.fold_left 
        (fun env (pars, sym, sorts, sort, _) -> 
-	add_fun_overload sym (Fun_declaration [pars, sorts, sort]) env) 
+	overload_fun sym (Fun_declaration [pars, sorts, sort]) env) 
        newenv par_fun_declarations)
     empty theory_declarations
 
-let logic_environment sym =
+let logic_signature sym =
   match sym with
-  | "QF_UF" -> environment Qf_uf
+  | "QF_UF" -> signature Qf_uf
   | _ -> raise Logic_error
-
-let declare_sort sym n = 
-  (sym, []), Sort_declaration (int_of_string n)
-
-let define_sort sym syms tau =
-  raise Error.Not_implemented
-
-let declare_fun sym sorts sort env =
-  raise Error.Not_implemented
-
-let define_fun sym sorted_vars s t env =
-  raise Error.Not_implemented
-
-let in_line_assert t env =
-  raise Error.Not_implemented
-
-let in_line_get_value ts env =
-  raise Error.Not_implemented

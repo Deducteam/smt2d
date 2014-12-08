@@ -49,30 +49,30 @@ type logic_declaration = logic_name * theory_name list
 val core_declaration: theory_declaration
 val qf_uf_declaration: logic_declaration  
 
-(* *** ENVIRONMENT *** *)
+(* *** SIGNATURES *** *)
 
-type sort_data
-type fun_data
-type environment
+(* type sort_data *)
+(* type fun_data *)
+type signature
 
-val add_sort: sort_symbol -> sort_data -> environment -> environment
-val add_fun: fun_symbol -> fun_data -> environment -> environment
+(* val add_sort: sort_symbol -> sort_data -> signature -> signature *)
+(* val add_fun: fun_symbol -> fun_data -> signature -> signature *)
 
 (* *** SCOPING *** *)
 
-val logic_environment: Concrete.symbol -> environment
+val logic_signature: Concrete.symbol -> signature
 
-val declare_sort: Concrete.symbol -> Concrete.numeral -> sort_symbol * sort_data
+(* val declare_sort: Concrete.symbol -> Concrete.numeral -> sort_symbol * sort_data *)
 
-val define_sort: Concrete.symbol -> Concrete.symbol list -> Concrete.sort -> environment -> 
-		 sort_symbol * sort_data
+(* val define_sort: Concrete.symbol -> Concrete.symbol list -> Concrete.sort -> environment ->  *)
+(* 		 sort_symbol * sort_data *)
 
-val declare_fun: Concrete.symbol -> Concrete.sort list -> Concrete.sort -> environment -> 
-		 fun_symbol * fun_data
+(* val declare_fun: Concrete.symbol -> Concrete.sort list -> Concrete.sort -> environment ->  *)
+(* 		 fun_symbol * fun_data *)
 
-val define_fun: Concrete.symbol -> Concrete.sorted_var list -> Concrete.sort -> 
-			Concrete.term -> environment -> (fun_symbol * fun_data) list
+(* val define_fun: Concrete.symbol -> Concrete.sorted_var list -> Concrete.sort ->  *)
+(* 			Concrete.term -> environment -> (fun_symbol * fun_data) list *)
 							
-val in_line_assert: Concrete.term -> environment -> (fun_symbol * fun_data) list * term
+(* val in_line_assert: Concrete.term -> environment -> (fun_symbol * fun_data) list * term *)
 
-val in_line_get_value: Concrete.term list -> environment -> (fun_symbol * fun_data) list
+(* val in_line_get_value: Concrete.term list -> environment -> (fun_symbol * fun_data) list *)
