@@ -1,5 +1,3 @@
-type context
-
 (* parse the whole file *)
 let get_script lexbuf = 
   let rec add_command () script =
@@ -72,13 +70,19 @@ let get_contexts lexbuf =
   (* 	    ctx (List.rev sort_bindings))  *)
   (* 	 (List.rev fun_bindings))  *)
   (*     env (List.rev stack) in *)
-  (* let logic_env = get_logic_signature lexbuf in *)
+  let logic_signature = get_logic_signature lexbuf in
   (* - contexts: (env, assertion list) list corresponding to previous check-sat commands
      - stack: current assertion-set stack - (sort bindings, fun bindings, assertions) list *)
   let rec get_contexts_command contexts stack =
     try
       let command = Parser.command Lexer.token lexbuf in
       match command with
+      | Concrete.Check_sat ->
+	 begin match stack with
+	 | current :: _ -> get_contexts_command (current :: contexts) stack
+	 | [] -> assert false (* the implementation of pop garantees it *) end
+      | _ ->
+	 get_contexts_command contexts (Abstract.run_command command stack)
       (* | Concrete.Push num -> *)
       (* 	 let n = int_of_string num in get_contexts_command contexts (push n stack) *)
       (* | Concrete.Pop num -> *)
@@ -121,7 +125,5 @@ let get_contexts lexbuf =
       (* | Concrete.Set_logic _ -> *)
       (* 	 let (_, l, c) = Error.get_location lexbuf in *)
       (* 	 raise (Error.Logic_error ("Forbidden alternative set_logic command", l, c)) *)
-      | _ ->
-	 get_contexts_command contexts stack
     with End_of_file -> List.rev contexts in
-  get_contexts_command [] [([],[],[])]
+  get_contexts_command [] [(logic_signature,[])]

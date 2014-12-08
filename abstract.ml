@@ -178,7 +178,11 @@ let overload_fun sym data signature =
       else FunsMap.add sym data signature.funs;
   }
 
-(* *** SCOPING *** *)
+(* *** ASSERTION SETS *** *)
+
+type assertion_set = signature * term list
+
+(* *** LOGIC SIGNATURES *** *)
 
 let theory_declaration theory_name =
   match theory_name with
@@ -211,3 +215,8 @@ let logic_signature sym =
   match sym with
   | "QF_UF" -> signature Qf_uf
   | _ -> raise Logic_error
+
+(* *** RUN COMMANDS *** *)
+
+let run_command stack = 
+  raise Error.Not_implemented

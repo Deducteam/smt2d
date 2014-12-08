@@ -10,7 +10,7 @@ let check_get_script file =
   let chan = open_in file in
   let lexbuf = Lexing.from_channel chan in
   try
-    let _ = Context.get_script lexbuf in ()
+    let _ = Run.get_script lexbuf in ()
   with Parsing.Parse_error ->
     let (s, l, c) = Error.get_location lexbuf in
     raise (Error.Parser_error (s, l, c))
@@ -19,7 +19,7 @@ let check_get_logic_signature file =
   let chan = open_in file in
   let lexbuf = Lexing.from_channel chan in
   try
-    let _ = Context.get_logic_signature lexbuf in ()
+    let _ = Run.get_logic_signature lexbuf in ()
   with Parsing.Parse_error ->
     let (s, l, c) = Error.get_location lexbuf in
     raise (Error.Parser_error (s, l, c))
@@ -28,7 +28,7 @@ let check_get_contexts file =
   let chan = open_in file in
   let lexbuf = Lexing.from_channel chan in
   try
-    let _ = Context.get_contexts lexbuf in ()
+    let _ = Run.get_contexts lexbuf in ()
   with Parsing.Parse_error ->
     let (s, l, c) = Error.get_location lexbuf in
     raise (Error.Parser_error (s, l, c))
