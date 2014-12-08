@@ -120,23 +120,31 @@ let number num =
 let sort_symbol id =
   id
 
-let sort_parameter (sym, nums) =
-  match nums with
-  | [] -> sym
-  | _ -> raise Script_error
+let fun_symbol sym =
+  Identifier_fun (sym, [])
+
+let sort_parameter sym =
+  sym
 
 let logic_name sym =
   match sym with
   | "QF_UF" -> Qf_uf
   | _ -> raise Logic_error
 
-let rec parametric_sort signature sort =
-  match sort with
-  | Concrete.Sort (id, sorts) ->
-     let sort_sym = sort_symbol id in
-     if SortsMap.mem sort_sym signature.sorts
-     then Par_sort (sort_sym, List.map (parametric_sort signature) sorts)
-     else Par (sort_parameter id)
+let rec sort csort =
+  match csort with
+  | Concrete.Sort (id, csorts) ->
+     Sort (sort_symbol id, List.map sort csorts)
+
+let rec parametric_sort pars csort =
+  match csort with
+  | Concrete.Sort ((sym, []), []) ->
+     let par = sort_parameter sym in
+     if List.mem par pars
+     then Par par
+     else Par_sort (sort_symbol (sym, []), [])
+  | Concrete.Sort (id, csorts) ->
+     Par_sort (sort_symbol id, List.map (parametric_sort pars) csorts)
 
 (* *** CONSTANTS *** *)
 
@@ -265,11 +273,14 @@ let run_command command stack =
      (add_sort sort_sym (Sort_declaration n) signature, assertions) :: sets
   | Concrete.Define_sort (sym, syms, tau) ->
      let sort_sym = sort_symbol (sym, []) in
-     let pars = List.map (fun sym -> sort_parameter (sym, [])) syms in
-     let par_sort = parametric_sort signature tau in
+     let pars = List.map sort_parameter syms in
+     let par_sort = parametric_sort pars tau in
      (add_sort sort_sym (Sort_definition (pars, par_sort)) signature, assertions) :: sets
-  | Concrete.Declare_fun (sym, sorts, sort) ->
-     raise Error.Not_implemented
+  | Concrete.Declare_fun (sym, csorts, csort) ->
+     let fun_sym = fun_symbol sym in
+     let par_sorts = List.map (parametric_sort []) csorts in
+     let par_sort = parametric_sort [] csort in
+     (add_fun fun_sym (Fun_declaration [[], par_sorts, par_sort]) signature, assertions) :: sets
   | Concrete.Define_fun (sym, sorted_vars, s, t) ->
      raise Error.Not_implemented
   | Concrete.Assert t ->
