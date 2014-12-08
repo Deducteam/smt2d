@@ -216,16 +216,16 @@ let declare_sort sym n =
   (sym, []), Sort_declaration (int_of_string n)
 
 let define_sort sym syms tau =
-  assert false (* à compléter *)
+  raise Error.Not_implemented
 
 let declare_fun sym sorts sort env =
-  assert false (* à compléter *)
+  raise Error.Not_implemented
 
 let define_fun sym sorted_vars s t env =
-  assert false (* à compléter *)
+  raise Error.Not_implemented
 
 let in_line_assert t env =
-  assert false (* à compléter *)
+  raise Error.Not_implemented
 
 let in_line_get_value ts env =
-  assert false (* à compléter *)
+  raise Error.Not_implemented
