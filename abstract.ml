@@ -181,6 +181,9 @@ let overload_fun sym data signature =
 
 (* *** CONCRETE TO ABSTRACT *** *)
 
+let number num =
+  int_of_string num
+
 let logic_name sym =
   match sym with
   | "QF_UF" -> Qf_uf
@@ -223,18 +226,19 @@ let logic_signature logic_name =
 (* *** RUN COMMANDS *** *)
 
 let rec push n stack =
-  match n with
-  | 0 -> stack
-  | _ ->
-     push (n-1) (([],[],[]) :: stack)
+  match n, stack with
+  | _, [] -> raise Script_error
+  | 0, _ -> stack
+  | _, current :: other ->
+     push (n-1) (current :: stack)     
 
 let rec pop n stack =
   match n, stack with
   | 0, _ -> stack
-  | _, current :: previous :: other ->
-     pop (n-1) (previous :: other)
-  | _, _ ->
+  | _, [] | _, [_] ->
      raise Script_error
+  | _, current :: other ->
+     pop (n-1) other
 
 (* assert that the stack has a head and replaces it by (f head) *)
 let apply_to_current f stack =
@@ -245,9 +249,9 @@ let apply_to_current f stack =
 let run_command command stack =
   match command with
   | Concrete.Push num ->
-     raise Error.Not_implemented
+     let n = number num in push n stack
   | Concrete.Pop num ->
-     raise Error.Not_implemented
+     let n = number num in pop n stack
   | Concrete.Declare_sort (sym, n) ->
      raise Error.Not_implemented
   | Concrete.Define_sort (sym, syms, tau) ->

@@ -1,1 +1,2 @@
 sortir les données de Core et Qf_uf de abstract ?
+séparer assertion_list dans un module à part ?
