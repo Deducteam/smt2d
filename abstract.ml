@@ -72,7 +72,7 @@ let core_declaration =
     Par_sort (("Bool", []), []),
     []
   ; [], 
-    Identifier_fun ("imply", []), 
+    Identifier_fun ("=>", []), 
     [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
     Par_sort (("Bool", []), []),
     []
@@ -92,7 +92,7 @@ let core_declaration =
     Par_sort (("Bool", []), []),
     []
   ; ["A"],
-    Identifier_fun ("equal", []), 
+    Identifier_fun ("=", []), 
     [Par "A"; Par "A"], 
     Par_sort (("Bool", []), []),
     []
