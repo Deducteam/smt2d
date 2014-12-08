@@ -58,13 +58,17 @@ type signature
 (* val add_sort: sort_symbol -> sort_data -> signature -> signature *)
 (* val add_fun: fun_symbol -> fun_data -> signature -> signature *)
 
+(* *** CONCRETE TO ABSTRACT *** *)
+
+val logic_name: Concrete.symbol -> logic_name
+
 (* *** ASSERTION SETS *** *)
 
 type assertion_set = signature * term list
 
 (* *** LOGIC SIGNATURES *** *)
 
-val logic_signature: Concrete.symbol -> signature
+val logic_signature: logic_name -> signature
 
 (* *** RUN COMMANDS *** *)
 

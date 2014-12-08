@@ -2,6 +2,7 @@
 
 exception Logic_error
 exception Signature_error
+exception Script_error
 
 type number = int
 type sort_symbol = Concrete.identifier
@@ -178,6 +179,14 @@ let overload_fun sym data signature =
       else FunsMap.add sym data signature.funs;
   }
 
+(* *** CONCRETE TO ABSTRACT *** *)
+
+let logic_name sym =
+  match sym with
+  | "QF_UF" -> Qf_uf
+  | _ -> raise Logic_error
+
+
 (* *** ASSERTION SETS *** *)
 
 type assertion_set = signature * term list
@@ -192,7 +201,7 @@ let logic_declaration logic_name =
   match logic_name with
   | Qf_uf -> qf_uf_declaration 
 
-let signature logic_name =
+let logic_signature logic_name =
   let _, theory_names = logic_declaration logic_name in
   let theory_declarations = List.map theory_declaration theory_names in
   let empty = 
@@ -211,12 +220,46 @@ let signature logic_name =
        newenv par_fun_declarations)
     empty theory_declarations
 
-let logic_signature sym =
-  match sym with
-  | "QF_UF" -> signature Qf_uf
-  | _ -> raise Logic_error
-
 (* *** RUN COMMANDS *** *)
 
-let run_command stack = 
-  raise Error.Not_implemented
+let rec push n stack =
+  match n with
+  | 0 -> stack
+  | _ ->
+     push (n-1) (([],[],[]) :: stack)
+
+let rec pop n stack =
+  match n, stack with
+  | 0, _ -> stack
+  | _, current :: previous :: other ->
+     pop (n-1) (previous :: other)
+  | _, _ ->
+     raise Script_error
+
+(* assert that the stack has a head and replaces it by (f head) *)
+let apply_to_current f stack =
+  match stack with
+  | current :: other -> (f current) :: other
+  | [] -> assert false
+
+let run_command command stack =
+  match command with
+  | Concrete.Push num ->
+     raise Error.Not_implemented
+  | Concrete.Pop num ->
+     raise Error.Not_implemented
+  | Concrete.Declare_sort (sym, n) ->
+     raise Error.Not_implemented
+  | Concrete.Define_sort (sym, syms, tau) ->
+     raise Error.Not_implemented
+  | Concrete.Declare_fun (sym, sorts, sort) ->
+     raise Error.Not_implemented
+  | Concrete.Define_fun (sym, sorted_vars, s, t) ->
+     raise Error.Not_implemented
+  | Concrete.Assert t ->
+     raise Error.Not_implemented
+  | Concrete.Get_value ts ->
+     raise Error.Not_implemented
+  | Concrete.Set_logic _ ->
+     raise Logic_error
+  | _ -> stack
