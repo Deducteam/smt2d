@@ -77,13 +77,6 @@ module FunsMap =
       let compare = Pervasives.compare
     end)
 
-(* module VarsMap =  *)
-(*   Map.Make *)
-(*     (struct *)
-(*       type t = variable *)
-(*       let compare = Pervasives.compare *)
-(*     end)       *)
-
 (* one can infer a signature from a signature by removing all definitions *)
 type signature = {
   sorts: sort_data SortsMap.t;
@@ -124,13 +117,26 @@ let overload_fun sym data signature =
 let number num =
   int_of_string num
 
-let sort_symbol sym =
-  sym, []
+let sort_symbol id =
+  id
+
+let sort_parameter (sym, nums) =
+  match nums with
+  | [] -> sym
+  | _ -> raise Script_error
 
 let logic_name sym =
   match sym with
   | "QF_UF" -> Qf_uf
   | _ -> raise Logic_error
+
+let rec parametric_sort signature sort =
+  match sort with
+  | Concrete.Sort (id, sorts) ->
+     let sort_sym = sort_symbol id in
+     if SortsMap.mem sort_sym signature.sorts
+     then Par_sort (sort_sym, List.map (parametric_sort signature) sorts)
+     else Par (sort_parameter id)
 
 (* *** CONSTANTS *** *)
 
@@ -242,24 +248,26 @@ let rec pop n stack =
   | _, current :: other ->
      pop (n-1) other
 
-(* assert that the stack has a head and replaces it by (f head) *)
-let apply_to_signature f stack =
-  match stack with
-  | (current, assertions) :: other -> (f current, assertions) :: other
-  | [] -> assert false
-
 let run_command command stack =
+  (* pop function alows us to assert assert that the stack has a head *)
+  let signature, assertions, sets = 
+    match stack with
+    | (current, assertions) :: sets -> current, assertions, sets
+    | [] -> assert false in
   match command with
   | Concrete.Push num ->
      let n = number num in push n stack
   | Concrete.Pop num ->
      let n = number num in pop n stack
   | Concrete.Declare_sort (sym, num) ->
-     let sort = sort_symbol sym in
+     let sort_sym = sort_symbol (sym, []) in
      let n = number num in
-     apply_to_signature (add_sort sort (Sort_declaration n)) stack
+     (add_sort sort_sym (Sort_declaration n) signature, assertions) :: sets
   | Concrete.Define_sort (sym, syms, tau) ->
-     raise Error.Not_implemented
+     let sort_sym = sort_symbol (sym, []) in
+     let pars = List.map (fun sym -> sort_parameter (sym, [])) syms in
+     let par_sort = parametric_sort signature tau in
+     (add_sort sort_sym (Sort_definition (pars, par_sort)) signature, assertions) :: sets
   | Concrete.Declare_fun (sym, sorts, sort) ->
      raise Error.Not_implemented
   | Concrete.Define_fun (sym, sorted_vars, s, t) ->
