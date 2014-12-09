@@ -3,7 +3,7 @@
 type number = int
 type sort_symbol
 type fun_symbol
-type attribute_name
+type attribute_name = string
 type theory_name =
   | Core
 type sort_parameter

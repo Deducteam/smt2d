@@ -94,8 +94,7 @@ let rec run_in_line_definitions signature term =
      newsignature, Abstract.Exists (sorted_vars, newterm)
   | Abstract.Attributed (term, attributes) ->
      let attribute_names, _ = List.split attributes in
-     if List.mem
-	  (Abstract.attribute_name ":named") attribute_names
+     if List.mem ":named" attribute_names
      then raise Error.Not_implemented
      else 
        let newsignature, newterm = run_in_line_definitions signature term in
