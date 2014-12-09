@@ -52,7 +52,7 @@ type var_binding = symbol * term
 and term =
   | Spec_constant_term of spec_constant
   | Qual_identifier_term of qual_identifier
-  | App_term of qual_identifier * term list
+  | App_term of qual_identifier * term list (* non empty args *)
   | Let_term of var_binding list * term
   | Forall_term of sorted_var list * term
   | Exists_term of sorted_var list * term

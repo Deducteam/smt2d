@@ -114,59 +114,39 @@ let rec parametric_sort pars csort =
      Par_sort (sort_symbol id, List.map (parametric_sort pars) csorts)
 	      
 let attribute (key, opt) = key, opt
-
+				  
 let sorted_var (sym, csort) = variable sym, sort csort
 
 let rec var_binding varsset (sym, cterm) =
   variable sym, term varsset cterm
 
 and term varsset cterm =
-  let map f opt = match opt with None -> None | Some a -> Some (f a) in
   match cterm with
   | Concrete.Spec_constant_term const ->
      App (Spec_constant_fun const, None, [])
-  | Concrete.Qual_identifier_term ((sym, []), opt) ->
+  | Concrete.Qual_identifier_term (((sym, []) as id), None) ->
      let var = variable sym in
-     begin 
-       match opt with
-       | None ->
-	  if VarsSet.mem var varsset
-	  then Var var
-	  else App (fun_symbol (sym, []), None, []) 
-       | Some csort ->
-	  App (fun_symbol (sym, []), Some (sort csort), []) end
+     if VarsSet.mem var varsset
+     then Var var
+     else App (fun_symbol id, None, [])
   | Concrete.Qual_identifier_term (id, opt) ->
-     App (fun_symbol id, map sort opt, [])
-  | Concrete.App_term (((sym, []), opt), cterms) ->
-     let var = variable sym in
-     begin 
-       match opt, cterms with
-       | None, [] ->
-	  if VarsSet.mem var varsset
-	  then Var var
-	  else App (fun_symbol (sym, []), None, List.map (term varsset) cterms)
-       | _, _ ->
-	  App (fun_symbol (sym, []), map sort opt, List.map (term varsset) cterms) end
+     App (fun_symbol id, Util.option_map sort opt, [])
   | Concrete.App_term ((id, opt), cterms) ->
-     App (fun_symbol id, map sort opt, List.map (term varsset) cterms)
+     (* cannot be a variable because cterms is not empty *)
+     App (fun_symbol id, Util.option_map sort opt,
+	  List.map (term varsset) cterms)
   | Concrete.Let_term (var_bindings, cterm) ->
      let bindings = List.map (var_binding varsset) var_bindings in
      let vars, _ = List.split bindings in
-     Let 
-       (bindings, 
-	term (add_vars vars varsset) cterm)
+     Let (bindings, term (add_vars vars varsset) cterm)
   | Concrete.Forall_term (csorted_vars, cterm) ->
      let sorted_vars = List.map sorted_var csorted_vars in
      let vars, _ = List.split sorted_vars in
-     Forall 
-       (sorted_vars, 
-	term (add_vars vars varsset) cterm)
+     Forall (sorted_vars, term (add_vars vars varsset) cterm)
   | Concrete.Exists_term (csorted_vars, cterm) ->
      let sorted_vars = List.map sorted_var csorted_vars in
      let vars, _ = List.split sorted_vars in
-     Exists
-       (sorted_vars, 
-	term (add_vars vars varsset) cterm)
+     Exists (sorted_vars, term (add_vars vars varsset) cterm)
   | Concrete.Attributed_term (cterm, cattributes) ->
      Attributed (term varsset cterm, List.map attribute cattributes)
 
@@ -187,15 +167,17 @@ let command ccommand =
   | Concrete.Define_sort (sym, syms, csort) ->
      let pars = List.map sort_parameter syms in
      Define_sort
-       (sort_symbol (sym, []), pars, parametric_sort pars csort)
+       ((sym, []), pars, parametric_sort pars csort)
   | Concrete.Declare_fun (sym, csorts, csort) -> 
      Declare_fun
-       (fun_symbol (sym, []), List.map sort csorts, sort csort) 
+       (fun_symbol (sym, []),
+	List.map sort csorts, sort csort) 
   | Concrete.Define_fun (sym, csorted_vars, csort, cterm) -> 
      let sorted_vars = List.map sorted_var csorted_vars in
      let vars, _ = List.split sorted_vars in
      Define_fun
-       (fun_symbol (sym, []), sorted_vars, sort csort,
+       (fun_symbol (sym, []),
+	sorted_vars, sort csort,
 	term (add_vars vars VarsSet.empty) cterm)
   | Concrete.Push (num) -> 
      Push (number num)
@@ -231,21 +213,35 @@ let rec par_sort_of_sort sort =
 (* *** CONSTANTS *** *)
 
 let core_declaration =
-  let bool =
-    parametric_sort [] (Concrete.Sort (("Bool", []), [])) in
-  let a = sort_parameter "A" in
-  "Core", 
-  [sort_symbol ("Bool", []), 0, []], 
-  [ [], fun_symbol ("true", []), [], bool, []
-  ; [], fun_symbol ("false", []), [], bool, []
-  ; [], fun_symbol ("not", []), [bool], bool, []
-  ; [], fun_symbol ("=>", []), [bool; bool], bool, []
-  ; [], fun_symbol ("and", []), [bool; bool], bool, []
-  ; [], fun_symbol ("or", []), [bool; bool], bool, []
-  ; [], fun_symbol ("xor", []), [bool; bool], bool, []
-  ; [a], fun_symbol ("=", []), [Par a; Par a], bool, []
-  ; [a], fun_symbol ("distinct", []), [Par a; Par a], bool, []
-  ; [a], fun_symbol ("ite", []), [bool; Par a; Par a], Par a, []
+  let bool_id = "Bool", [] in
+  let true_id = "true", [] in
+  let false_id = "false", [] in
+  let not_id = "not", [] in
+  let imply_id = "=>", [] in
+  let and_id = "and", [] in
+  let or_id = "or", [] in
+  let xor_id = "xor", [] in
+  let equal_id = "=", [] in
+  let distinct_id = "distinct", [] in
+  let ite_id = "ite", [] in
+  let a_sym = "A" in
+  let core = "Core" in
+  let bool_sort = parametric_sort [] (Concrete.Sort (bool_id, [])) in
+  let a_par = sort_parameter a_sym in
+  let a_sort =
+    parametric_sort [a_par] (Concrete.Sort ((a_sym, []), [])) in
+  core,
+  [sort_symbol bool_id, 0, []], 
+  [ [], fun_symbol true_id, [], bool_sort, []
+  ; [], fun_symbol false_id, [], bool_sort, []
+  ; [], fun_symbol not_id, [bool_sort], bool_sort, []
+  ; [], fun_symbol imply_id, [bool_sort; bool_sort], bool_sort, []
+  ; [], fun_symbol and_id, [bool_sort; bool_sort], bool_sort, []
+  ; [], fun_symbol or_id, [bool_sort; bool_sort], bool_sort, []
+  ; [], fun_symbol xor_id, [bool_sort; bool_sort], bool_sort, []
+  ; [a_par], fun_symbol equal_id, [a_sort; a_sort], bool_sort, []
+  ; [a_par], fun_symbol distinct_id, [a_sort; a_sort], bool_sort, []
+  ; [a_par], fun_symbol ite_id, [bool_sort; a_sort; a_sort], a_sort, []
   ]
 
 let qf_uf_declaration = "QF_UF", ["Core"]
