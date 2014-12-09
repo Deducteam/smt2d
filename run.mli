@@ -1,4 +1,4 @@
-val get_script: Lexing.lexbuf -> Concrete.script
+val get_script: Lexing.lexbuf -> Abstract.script
 
 val get_logic_name: Lexing.lexbuf -> Abstract.logic_name
 

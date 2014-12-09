@@ -73,14 +73,16 @@ type command =
   | Get_option of attribute_name
   | Exit
 
+type script = command list
+      
 (* *** SIGNATURES *** *)
 
 type signature
 
 (* *** CONCRETE TO ABSTRACT *** *)
 
-val logic_name: Concrete.symbol -> logic_name
-
+val command: Concrete.command -> command
+				     
 (* *** CONSTANTS *** *)
 
 val core_declaration: theory_declaration
@@ -96,4 +98,4 @@ val logic_signature: logic_name -> signature
 
 (* *** RUN COMMANDS *** *)
 
-val run_command: Concrete.command -> assertion_set list -> assertion_set list
+val run_command: command -> assertion_set list -> assertion_set list

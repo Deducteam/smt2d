@@ -81,6 +81,7 @@ type command =
   | Get_option of attribute_name
   | Exit
 
+type script = command list
 		    
 (* *** SIGNATURES *** *)
 
@@ -121,6 +122,10 @@ module VarsSet =
       let compare = Pervasives.compare
     end)
 
+let add_vars vars varsset  =
+  List.fold_left
+    (fun varsset var -> VarsSet.add var varsset) varsset vars
+    
 (* one can infer a signature from a signature by removing all definitions *)
 type signature = {
   sorts: sort_data SortsMap.t;
@@ -167,6 +172,9 @@ let sort_symbol id =
 let fun_symbol id =
   Identifier_fun id
 
+let attribute_name cattr =
+  cattr
+		 
 let sort_parameter sym =
   sym
 
@@ -192,17 +200,17 @@ let rec parametric_sort pars csort =
      else Par_sort (sort_symbol (sym, []), [])
   | Concrete.Sort (id, csorts) ->
      Par_sort (sort_symbol id, List.map (parametric_sort pars) csorts)
-
+	      
 let attribute (key, opt) =
   key, opt
 
 let sorted_var (sym, csort) =
   variable sym, sort csort
 
-let rec var_binding vars_env (sym, cterm) =
-  variable sym, term vars_env cterm
+let rec var_binding varsset (sym, cterm) =
+  variable sym, term varsset cterm
 
-and term vars_env cterm =
+and term varsset cterm =
   let map f opt = match opt with None -> None | Some a -> Some (f a) in
   match cterm with
   | Concrete.Spec_constant_term const ->
@@ -212,7 +220,7 @@ and term vars_env cterm =
      begin 
        match opt with
        | None ->
-	  if VarsSet.mem var vars_env
+	  if VarsSet.mem var varsset
 	  then Var var
 	  else App (fun_symbol (sym, []), None, []) 
        | Some csort ->
@@ -224,37 +232,94 @@ and term vars_env cterm =
      begin 
        match opt, cterms with
        | None, [] ->
-	  if VarsSet.mem var vars_env
+	  if VarsSet.mem var varsset
 	  then Var var
-	  else App (fun_symbol (sym, []), None, List.map (term vars_env) cterms)
+	  else App (fun_symbol (sym, []), None, List.map (term varsset) cterms)
        | _, _ ->
-	  App (fun_symbol (sym, []), map sort opt, List.map (term vars_env) cterms) end
+	  App (fun_symbol (sym, []), map sort opt, List.map (term varsset) cterms) end
   | Concrete.App_term ((id, opt), cterms) ->
-     App (fun_symbol id, map sort opt, List.map (term vars_env) cterms)
+     App (fun_symbol id, map sort opt, List.map (term varsset) cterms)
   | Concrete.Let_term (var_bindings, cterm) ->
-     let bindings = List.map (var_binding vars_env) var_bindings in
+     let bindings = List.map (var_binding varsset) var_bindings in
+     let vars, _ = List.split bindings in
      Let 
        (bindings, 
-	term 
-	  (List.fold_left (fun vars_env (var, _) -> VarsSet.add var vars_env) vars_env bindings) 
-	  cterm)
+	term (add_vars vars varsset) cterm)
   | Concrete.Forall_term (csorted_vars, cterm) ->
      let sorted_vars = List.map sorted_var csorted_vars in
+     let vars, _ = List.split sorted_vars in
      Forall 
        (sorted_vars, 
-	term 
-	  (List.fold_left (fun vars_env (var, _) -> VarsSet.add var vars_env) vars_env sorted_vars)
-	  cterm)
+	term (add_vars vars varsset) cterm)
   | Concrete.Exists_term (csorted_vars, cterm) ->
      let sorted_vars = List.map sorted_var csorted_vars in
+     let vars, _ = List.split sorted_vars in
      Exists
        (sorted_vars, 
-	term 
-	  (List.fold_left (fun vars_env (var, _) -> VarsSet.add var vars_env) vars_env sorted_vars)
-	  cterm)
+	term (add_vars vars varsset) cterm)
   | Concrete.Attributed_term (cterm, cattributes) ->
-     Attributed (term vars_env cterm, List.map attribute cattributes)
+     Attributed (term varsset cterm, List.map attribute cattributes)
 
+let command_option copt =
+  attribute copt
+
+let info_flag cflag =
+  cflag
+	    
+let command ccommand =
+  match ccommand with
+  | Concrete.Set_logic (sym) ->
+     Set_logic (logic_name sym)
+  | Concrete.Set_option (copt) ->
+     Set_option (command_option copt)
+  | Concrete.Set_info (cattribute) ->
+     Set_info (attribute cattribute)
+  | Concrete.Declare_sort (sym, num) ->
+     Declare_sort (sort_symbol (sym, []), number num)
+  | Concrete.Define_sort (sym, syms, csort) ->
+     let pars = List.map sort_parameter syms in
+     Define_sort
+       (sort_symbol (sym, []), pars, parametric_sort pars csort)
+  | Concrete.Declare_fun (sym, csorts, csort) -> 
+     Declare_fun
+       (fun_symbol (sym, []), List.map sort csorts, sort csort) 
+  | Concrete.Define_fun (sym, csorted_vars, csort, cterm) -> 
+     let sorted_vars = List.map sorted_var csorted_vars in
+     let vars, _ = List.split sorted_vars in
+     Define_fun
+       (fun_symbol (sym, []), sorted_vars, sort csort,
+	term (add_vars vars VarsSet.empty) cterm)
+  | Concrete.Push (num) -> 
+     Push (number num)
+  | Concrete.Pop (num) -> 
+     Pop (number num)
+  | Concrete.Assert (cterm) -> 
+     Assert (term VarsSet.empty cterm)
+  | Concrete.Check_sat -> 
+     Check_sat
+  | Concrete.Get_assertions -> 
+     Get_assertions
+  | Concrete.Get_proof -> 
+     Get_proof
+  | Concrete.Get_unsat_core -> 
+     Get_unsat_core
+  | Concrete.Get_value (cterms) -> 
+     Get_value (List.map (term VarsSet.empty) cterms)
+  | Concrete.Get_assignment -> 
+     Get_assignment
+  | Concrete.Get_option (key) -> 
+     Get_option (attribute_name key)
+  | Concrete.Get_info (cinfo_flag) -> 
+     Get_info (info_flag cinfo_flag)
+  | Concrete.Exit -> 
+     Exit
+
+(* Sorts are parametric sorts *)
+let rec par_sort_of_sort sort =
+  match sort with
+  | Sort (sort_sym, sorts) ->
+     Par_sort (sort_sym, List.map par_sort_of_sort sorts)
+       
 (* *** CONSTANTS *** *)
 
 let core_declaration =
@@ -399,46 +464,34 @@ let run_command command stack =
     | (current, assertions) :: sets -> current, assertions, sets
     | [] -> assert false in
   match command with
-  | Concrete.Push num ->
-     let n = number num in push n stack
-  | Concrete.Pop num ->
-     let n = number num in pop n stack
-  | Concrete.Declare_sort (sym, num) ->
-     let sort_sym = sort_symbol (sym, []) in
-     let n = number num in
+  | Push n ->
+     push n stack
+  | Pop n ->
+     pop n stack
+  | Declare_sort (sort_sym, n) ->
      (add_sort sort_sym (Sort_declaration n) signature, assertions) :: sets
-  | Concrete.Define_sort (sym, syms, tau) ->
-     let sort_sym = sort_symbol (sym, []) in
-     let pars = List.map sort_parameter syms in
-     let par_sort = parametric_sort pars tau in
+  | Define_sort (sort_sym, pars, par_sort) ->
      (add_sort sort_sym (Sort_definition (pars, par_sort)) signature, assertions) :: sets
-  | Concrete.Declare_fun (sym, csorts, csort) ->
-     let fun_sym = fun_symbol (sym, []) in
-     let par_sorts = List.map (parametric_sort []) csorts in
-     let par_sort = parametric_sort [] csort in
-     (add_fun fun_sym (Fun_declaration [[], par_sorts, par_sort]) signature, assertions) :: sets
-  | Concrete.Define_fun (sym, csorted_vars, csort, cterm) ->
-     let fun_sym = fun_symbol (sym, []) in
-     let sorted_vars = List.map sorted_var csorted_vars in
-     let sort = sort csort in
-     let vars_env = 
-       List.fold_left 
-	 (fun vars_env (var, sort) -> VarsSet.add var vars_env) VarsSet.empty sorted_vars in
-     let term = term vars_env cterm in
+  | Declare_fun (fun_sym, sorts, sort) ->
+     (add_fun
+	fun_sym
+	(Fun_declaration
+	   [[],
+	    List.map par_sort_of_sort sorts,
+	    par_sort_of_sort sort]) signature, assertions) :: sets
+  | Define_fun (fun_sym, sorted_vars, sort, term) ->
      let newsignature, newterm = run_in_line_definitions signature term in
      (add_fun fun_sym (Fun_definition (sorted_vars, sort, newterm)) newsignature, assertions) :: sets
-  | Concrete.Assert cterm ->
-     let term = term VarsSet.empty cterm in
+  | Assert term ->
      let newsignature, newterm = run_in_line_definitions signature term in
      (newsignature, newterm :: assertions) :: sets
-  | Concrete.Get_value cterms ->
-     let terms = List.map (term VarsSet.empty) cterms in
+  | Get_value terms ->
      let newsignature =
        List.fold_left 
 	 (fun signature term -> 
 	  let newsignature, _ = run_in_line_definitions signature term in
 	  newsignature) signature terms in
      (newsignature, assertions) :: sets
-  | Concrete.Set_logic _ ->
+  | Set_logic _ ->
      raise Logic_error
   | _ -> stack
