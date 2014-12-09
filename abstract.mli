@@ -3,7 +3,7 @@
 type number = int
 type sort_symbol
 type fun_symbol
-type attribute_name
+type attribute_name = string
 type theory_name
 type sort_parameter
 type variable
@@ -77,12 +77,28 @@ type script = command list
       
 (* *** SIGNATURES *** *)
 
+type sort_data =
+  | Sort_declaration of int
+  | Sort_definition of sort_parameter list * parametric_sort
+
+type fun_data =
+  | Fun_declaration of
+      (sort_parameter list * parametric_sort list * parametric_sort) list
+  | Fun_definition of (variable * sort) list * sort * term
+		      
 type signature
+
+val add_sort: sort_symbol -> sort_data -> signature -> signature
+
+val add_fun: fun_symbol -> fun_data -> signature -> signature
 
 (* *** CONCRETE TO ABSTRACT *** *)
 
 val command: Concrete.command -> command
-				     
+
+(* Sorts are parametric sorts *)
+val par_sort_of_sort: sort -> parametric_sort
+				
 (* *** CONSTANTS *** *)
 
 val core_declaration: theory_declaration
@@ -95,7 +111,3 @@ type assertion_set = signature * term list
 (* *** LOGIC SIGNATURES *** *)
 
 val logic_signature: logic_name -> signature
-
-(* *** RUN COMMANDS *** *)
-
-val run_command: command -> assertion_set list -> assertion_set list

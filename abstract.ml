@@ -2,7 +2,6 @@
 
 exception Logic_error
 exception Signature_error
-exception Script_error
 
 type number = int
 type sort_symbol = Concrete.identifier
@@ -412,86 +411,3 @@ let logic_signature logic_name =
 	overload_fun sym (Fun_declaration [pars, sorts, sort]) env) 
        newenv par_fun_declarations)
     empty theory_declarations
-
-(* *** RUN COMMANDS *** *)
-
-let rec push n stack =
-  match n, stack with
-  | _, [] -> raise Script_error
-  | 0, _ -> stack
-  | _, current :: other ->
-     push (n-1) (current :: stack)     
-
-let rec pop n stack =
-  match n, stack with
-  | 0, _ -> stack
-  | _, [] | _, [_] ->
-     raise Script_error
-  | _, current :: other ->
-     pop (n-1) other
-
-let rec run_in_line_definitions signature term =
-  match term with
-  | Var _ -> signature, term
-  | App (fun_sym, opt, terms) ->
-     let newsignature, newterms_rev = 
-       List.fold_left 
-	 (fun (signature, newterms_rev) term ->
-	  let newsignature, newterm = run_in_line_definitions signature term in
-	  newsignature, newterm :: newterms_rev) (signature, []) terms in
-     newsignature, App (fun_sym, opt, List.rev newterms_rev)
-  | Let (bindings, term) -> 
-     let newsignature, newterm = run_in_line_definitions signature term in
-     newsignature, Let (bindings, newterm)
-  | Forall (sorted_vars, term) ->
-     let newsignature, newterm = run_in_line_definitions signature term in
-     newsignature, Forall (sorted_vars, newterm)
-  | Exists (sorted_vars, term) ->
-     let newsignature, newterm = run_in_line_definitions signature term in
-     newsignature, Exists (sorted_vars, newterm)
-  | Attributed (term, attributes) ->
-     let attribute_names, _ = List.split attributes in
-     if List.mem ":named" attribute_names
-     then raise Error.Not_implemented
-     else 
-       let newsignature, newterm = run_in_line_definitions signature term in
-       newsignature, Attributed (newterm, attributes)       
-
-let run_command command stack =
-  (* pop function alows us to assert assert that the stack has a head *)
-  let signature, assertions, sets = 
-    match stack with
-    | (current, assertions) :: sets -> current, assertions, sets
-    | [] -> assert false in
-  match command with
-  | Push n ->
-     push n stack
-  | Pop n ->
-     pop n stack
-  | Declare_sort (sort_sym, n) ->
-     (add_sort sort_sym (Sort_declaration n) signature, assertions) :: sets
-  | Define_sort (sort_sym, pars, par_sort) ->
-     (add_sort sort_sym (Sort_definition (pars, par_sort)) signature, assertions) :: sets
-  | Declare_fun (fun_sym, sorts, sort) ->
-     (add_fun
-	fun_sym
-	(Fun_declaration
-	   [[],
-	    List.map par_sort_of_sort sorts,
-	    par_sort_of_sort sort]) signature, assertions) :: sets
-  | Define_fun (fun_sym, sorted_vars, sort, term) ->
-     let newsignature, newterm = run_in_line_definitions signature term in
-     (add_fun fun_sym (Fun_definition (sorted_vars, sort, newterm)) newsignature, assertions) :: sets
-  | Assert term ->
-     let newsignature, newterm = run_in_line_definitions signature term in
-     (newsignature, newterm :: assertions) :: sets
-  | Get_value terms ->
-     let newsignature =
-       List.fold_left 
-	 (fun signature term -> 
-	  let newsignature, _ = run_in_line_definitions signature term in
-	  newsignature) signature terms in
-     (newsignature, assertions) :: sets
-  | Set_logic _ ->
-     raise Logic_error
-  | _ -> stack
