@@ -131,6 +131,11 @@ type signature = {
   funs: fun_data FunsMap.t;
 }
 
+let empty =
+  { sorts = SortsMap.empty;
+    funs = FunsMap.empty;
+  }
+		   
 let add_sort sym data signature =
   { sorts =
       if SortsMap.mem sym signature.sorts
@@ -322,92 +327,22 @@ let rec par_sort_of_sort sort =
 (* *** CONSTANTS *** *)
 
 let core_declaration =
+  let bool =
+    parametric_sort [] (Concrete.Sort (("Bool", []), [])) in
+  let a = sort_parameter "A" in
   Core, 
-  [("Bool", []), 0, []], 
-  [ [], 
-    Identifier_fun ("true", []),
-    [],
-    Par_sort (("Bool", []), []), 
-    []
-  ; [], 
-    Identifier_fun ("false", []),
-    [],
-    Par_sort (("Bool", []), []),
-    []
-  ; [], 
-    Identifier_fun ("not", []),
-    [Par_sort (("Bool", []), [])],
-    Par_sort (("Bool", []), []),
-    []
-  ; [], 
-    Identifier_fun ("=>", []), 
-    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
-    Par_sort (("Bool", []), []),
-    []
-  ; [], 
-    Identifier_fun ("and", []),
-    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
-    Par_sort (("Bool", []), []),
-    []
-  ; [], 
-    Identifier_fun ("or", []),
-    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
-    Par_sort (("Bool", []), []),
-    []
-  ; [], 
-    Identifier_fun ("xor", []),
-    [Par_sort (("Bool", []), []); Par_sort (("Bool", []), [])],
-    Par_sort (("Bool", []), []),
-    []
-  ; ["A"],
-    Identifier_fun ("=", []), 
-    [Par "A"; Par "A"], 
-    Par_sort (("Bool", []), []),
-    []
-  ; ["A"],
-    Identifier_fun ("distinct", []), 
-    [Par "A"; Par "A"], 
-    Par_sort (("Bool", []), []),
-    []
-  ; ["A"],
-    Identifier_fun ("ite", []), 
-    [Par_sort (("Bool", []), []); Par "A"; Par "A"], 
-    Par "A",
-    []
+  [sort_symbol ("Bool", []), 0, []], 
+  [ [], fun_symbol ("true", []), [], bool, []
+  ; [], fun_symbol ("false", []), [], bool, []
+  ; [], fun_symbol ("not", []), [bool], bool, []
+  ; [], fun_symbol ("=>", []), [bool; bool], bool, []
+  ; [], fun_symbol ("and", []), [bool; bool], bool, []
+  ; [], fun_symbol ("or", []), [bool; bool], bool, []
+  ; [], fun_symbol ("xor", []), [bool; bool], bool, []
+  ; [a], fun_symbol ("=", []), [Par a; Par a], bool, []
+  ; [a], fun_symbol ("distinct", []), [Par a; Par a], bool, []
+  ; [a], fun_symbol ("ite", []), [bool; Par a; Par a], Par a, []
   ]
 
 let qf_uf_declaration = 
   Qf_uf, [Core]
-
-(* *** ASSERTION SETS *** *)
-
-type assertion_set = signature * term list
-
-(* *** LOGIC SIGNATURES *** *)
-
-let theory_declaration theory_name =
-  match theory_name with
-  | Core -> core_declaration
-
-let logic_declaration logic_name = 
-  match logic_name with
-  | Qf_uf -> qf_uf_declaration 
-
-let logic_signature logic_name =
-  let _, theory_names = logic_declaration logic_name in
-  let theory_declarations = List.map theory_declaration theory_names in
-  let empty = 
-  { sorts = SortsMap.empty;
-    funs = FunsMap.empty;
-  } in
-  List.fold_left 
-    (fun env (_, sort_declarations, par_fun_declarations) -> 
-     let newenv = 
-       List.fold_left 
-	 (fun env (sym, n, _) -> add_sort sym (Sort_declaration n) env) 
-	 env sort_declarations in
-     List.fold_left 
-       (fun env (pars, sym, sorts, sort, _) -> 
-	overload_fun sym (Fun_declaration [pars, sorts, sort]) env) 
-       newenv par_fun_declarations)
-    empty theory_declarations

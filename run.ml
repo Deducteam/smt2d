@@ -9,7 +9,7 @@ let get_script lexbuf =
       add_command () (command :: script)
     with End_of_file -> script in
   add_command () []
-
+	      
 (* - finds the first set-logic command, returns its logic
    - checks that no forbiden command is used before *)
 let get_logic_name lexbuf =
@@ -32,6 +32,32 @@ let get_logic_name lexbuf =
     let (_, l, c) = Error.get_location lexbuf in
     raise (Error.Parser_error ("End-of-file", l, c))
 	  
+let theory_declaration theory_name =
+  match theory_name with
+  | Abstract.Core -> Abstract.core_declaration
+
+let logic_declaration logic_name = 
+  match logic_name with
+  | Abstract.Qf_uf -> Abstract.qf_uf_declaration 
+  
+let logic_signature logic_name =
+  let _, theory_names = logic_declaration logic_name in
+  let theory_declarations =
+    List.map theory_declaration theory_names in
+  let empty = Abstract.empty in
+  List.fold_left 
+    (fun env (_, sort_declarations, par_fun_declarations) -> 
+     let newenv = 
+       List.fold_left 
+	 (fun env (sym, n, _) ->
+	  Abstract.add_sort sym (Abstract.Sort_declaration n) env) 
+	 env sort_declarations in
+     List.fold_left 
+       (fun env (pars, sym, sorts, sort, _) -> 
+	Abstract.overload_fun sym (Abstract.Fun_declaration [pars, sorts, sort]) env) 
+       newenv par_fun_declarations)
+    empty theory_declarations
+
 let rec push n stack =
   match n, stack with
   | _, [] -> raise Script_error
@@ -68,7 +94,8 @@ let rec run_in_line_definitions signature term =
      newsignature, Abstract.Exists (sorted_vars, newterm)
   | Abstract.Attributed (term, attributes) ->
      let attribute_names, _ = List.split attributes in
-     if List.mem ":named" attribute_names
+     if List.mem
+	  (Abstract.attribute_name ":named") attribute_names
      then raise Error.Not_implemented
      else 
        let newsignature, newterm = run_in_line_definitions signature term in
@@ -79,7 +106,7 @@ let rec run_in_line_definitions signature term =
    - returns the list of (env, assertion lists) couples 
      corresponding to each check-sat command of the script *)
 let get_contexts lexbuf =
-  let logic_signature = Abstract.logic_signature (get_logic_name lexbuf) in
+  let logic_signature = logic_signature (get_logic_name lexbuf) in
   (* - contexts: (env, assertion list) list corresponding to previous check-sat commands
      - stack: current assertion-set stack - (sort bindings, fun bindings, assertions) list *)
   let rec get_contexts_command contexts stack =

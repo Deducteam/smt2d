@@ -3,12 +3,14 @@
 type number = int
 type sort_symbol
 type fun_symbol
-type attribute_name = string
-type theory_name
+type attribute_name
+type theory_name =
+  | Core
 type sort_parameter
 type variable
 type attribute_value
-type logic_name
+type logic_name =
+  | Qf_uf
 
 (* Sorts *)
 
@@ -88,26 +90,21 @@ type fun_data =
 		      
 type signature
 
+val empty: signature
 val add_sort: sort_symbol -> sort_data -> signature -> signature
-
 val add_fun: fun_symbol -> fun_data -> signature -> signature
+val overload_fun: fun_symbol -> fun_data -> signature -> signature
 
 (* *** CONCRETE TO ABSTRACT *** *)
 
+val attribute_name: Concrete.keyword -> attribute_name
+		       
 val command: Concrete.command -> command
 
 (* Sorts are parametric sorts *)
 val par_sort_of_sort: sort -> parametric_sort
-				
+
 (* *** CONSTANTS *** *)
 
 val core_declaration: theory_declaration
 val qf_uf_declaration: logic_declaration  
-
-(* *** ASSERTION SETS *** *)
-
-type assertion_set = signature * term list
-
-(* *** LOGIC SIGNATURES *** *)
-
-val logic_signature: logic_name -> signature
