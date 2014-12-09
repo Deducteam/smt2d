@@ -1,6 +1,8 @@
 {
   open Parser
   open Lexing
+
+  exception Lexer_error
 	 
   let iter_new_line s lexbuf =
     String.iter 
@@ -41,13 +43,13 @@ rule token = parse
   | "exists"            { EXISTS }
   | '!'                 { ATTRIBUTE }
   | "par"
-        { let (s, l, c) = Error.get_location lexbuf in raise (Error.Lexer_error (s, l, c) ) }
+        { raise Lexer_error }
   | "NUMERAL"
-        { let (s, l, c) = Error.get_location lexbuf in raise (Error.Lexer_error (s, l, c) ) }
+        { raise Lexer_error }
   | "DECIMAL"
-        { let (s, l, c) = Error.get_location lexbuf in raise (Error.Lexer_error (s, l, c) ) }
+        { raise Lexer_error }
   | "STRING"
-        { let (s, l, c) = Error.get_location lexbuf in raise (Error.Lexer_error (s, l, c) ) }
+        { raise Lexer_error }
   | "set-logic"         { SET_LOGIC }
   | "set-option"        { SET_OPTION }
   | "set-info"          { SET_INFO }
@@ -86,4 +88,4 @@ rule token = parse
   | ':' ['0'-'9' 'a'-'z' 'A'-'Z' '+' '-' '/' '*' '=' '%' '?' '!' '.' '$' '_' '~' '&' '^' '<' '>' '@']+ as s
         { KEYWORD s }
   | _
-        { let (s, l, c) = Error.get_location lexbuf in raise (Error.Lexer_error (s, l, c) ) }
+        { raise Lexer_error }

@@ -9,8 +9,4 @@ let get_location lexbuf =
 let print_location_error l c str = 
   eprintf "Line %d Col %d: %s\n" l c str; exit 1
 
-exception Lexer_error of string * int * int
-exception Parser_error of string * int * int
-exception Script_error of int * int
-exception Logic_error of string * int * int
 exception Not_implemented

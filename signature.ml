@@ -15,63 +15,77 @@ type fun_data =
       (Abstract.variable * Abstract.sort) list *
 	Abstract.sort * Abstract.term
 
-module SortsMap =
+module SortMap =
   Map.Make
     (struct
       type t = Abstract.sort_symbol
       let compare = Pervasives.compare
     end)
 
-module FunsMap =
+module FunMap =
   Map.Make
     (struct
       type t = Abstract.fun_symbol
       let compare = Pervasives.compare
     end)
-
-module VarsMap =
-  Map.Make
-    (struct
-      type t = Abstract.variable
-      let compare = Pervasives.compare
-    end)
     
-(* one can infer a signature from a signature by removing all definitions *)
 type signature = {
-  sorts: sort_data SortsMap.t;
-  funs: fun_data FunsMap.t;
+  sorts: sort_data SortMap.t;
+  funs: fun_data FunMap.t;
 }
 
-let empty =
-  { sorts = SortsMap.empty;
-    funs = FunsMap.empty;
-  }
+(* Internal functions *)
 		   
+let empty =
+  { sorts = SortMap.empty;
+    funs = FunMap.empty;
+  }
+
+let overload_fun sym data signature =
+  { sorts = signature.sorts;
+    funs =
+      if FunMap.mem sym signature.funs
+      then
+	let envdata = FunMap.find sym signature.funs in
+	match envdata, data with
+	| Fun_declaration l1, Fun_declaration l2 ->
+	   FunMap.add sym (Fun_declaration (l1@l2)) signature.funs
+	| _, _ -> raise Signature_error
+      else FunMap.add sym data signature.funs;
+  }
+
+(* Exported functions *)
+    
 let add_sort sym data signature =
   { sorts =
-      if SortsMap.mem sym signature.sorts
+      if SortMap.mem sym signature.sorts
       then raise Signature_error
-      else SortsMap.add sym data signature.sorts;
+      else SortMap.add sym data signature.sorts;
     funs = signature.funs;
   }
 
 let add_fun sym data signature =
   { sorts = signature.sorts;
     funs =
-      if FunsMap.mem sym signature.funs
+      if FunMap.mem sym signature.funs
       then raise Signature_error
-      else FunsMap.add sym data signature.funs;
+      else FunMap.add sym data signature.funs;
   }
-
-let overload_fun sym data signature =
-  { sorts = signature.sorts;
-    funs =
-      if FunsMap.mem sym signature.funs
-      then
-	let envdata = FunsMap.find sym signature.funs in
-	match envdata, data with
-	| Fun_declaration l1, Fun_declaration l2 ->
-	   FunsMap.add sym (Fun_declaration (l1@l2)) signature.funs
-	| _, _ -> raise Signature_error
-      else FunsMap.add sym data signature.funs;
-  }
+    
+let logic_signature logic_name =
+  let _, theory_names = Logic.logic_declaration logic_name in
+  let theory_declarations =
+    List.map Logic.theory_declaration theory_names in
+  List.fold_left 
+    (fun env (_, sort_declarations, par_fun_declarations) -> 
+     let newenv = 
+       List.fold_left 
+	 (fun env (sym, n, _) ->
+	  add_sort sym (Sort_declaration n) env) 
+	 env sort_declarations in
+     List.fold_left 
+       (fun env (pars, sym, sorts, sort, _) -> 
+        overload_fun
+	  sym (Fun_declaration [pars, sorts, sort]) env) 
+       newenv par_fun_declarations)
+    empty theory_declarations

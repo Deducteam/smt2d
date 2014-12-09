@@ -76,7 +76,11 @@ type command =
 type script = command list
       
 (* *** CONCRETE TO ABSTRACT *** *)
-		       
+
+type varset
+		      
+val term: varset -> Concrete.term -> term
+		      
 val command: Concrete.command -> command
 
 (* Sorts are parametric sorts *)

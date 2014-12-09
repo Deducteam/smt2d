@@ -1,4 +1,3 @@
-exception Logic_error
 exception Script_error
 
 (* parse the whole file *)
@@ -14,68 +13,17 @@ let get_script lexbuf =
 (* - finds the first set-logic command, returns its logic
    - checks that no forbiden command is used before *)
 let get_logic_name lexbuf =
-  try 
-    let rec get_logic_name_command () =
-      let command =
-	Abstract.command (Parser.command Lexer.token lexbuf) in
-      match command with
-      | Abstract.Set_option _
-      | Abstract.Set_info _
-      | Abstract.Get_option _
-      | Abstract.Get_info _
-        -> get_logic_name_command ()
-      | Abstract.Set_logic s -> s
-      | _ ->
-	 let (_, l, c) = Error.get_location lexbuf in
-	 raise (Error.Script_error (l, c)) in
-    get_logic_name_command ()
-  with End_of_file ->
-    let (_, l, c) = Error.get_location lexbuf in
-    raise (Error.Parser_error ("End-of-file", l, c))
-	  
-let theory_declaration theory_name =
-  match theory_name with
-  | "Core" -> Abstract.core_declaration
-  | _ -> raise Logic_error
-		
-let logic_declaration logic_name = 
-  match logic_name with
-  | "QF_UF" -> Abstract.qf_uf_declaration 
-  | _ -> raise Logic_error
-    
-let logic_signature logic_name =
-  let _, theory_names = logic_declaration logic_name in
-  let theory_declarations =
-    List.map theory_declaration theory_names in
-  let empty = Signature.empty in
-  List.fold_left 
-    (fun env (_, sort_declarations, par_fun_declarations) -> 
-     let newenv = 
-       List.fold_left 
-	 (fun env (sym, n, _) ->
-	  Signature.add_sort sym (Signature.Sort_declaration n) env) 
-	 env sort_declarations in
-     List.fold_left 
-       (fun env (pars, sym, sorts, sort, _) -> 
-        Signature.overload_fun
-	  sym (Signature.Fun_declaration [pars, sorts, sort]) env) 
-       newenv par_fun_declarations)
-    empty theory_declarations
-
-let rec push n stack =
-  match n, stack with
-  | _, [] -> raise Script_error
-  | 0, _ -> stack
-  | _, current :: other ->
-     push (n-1) (current :: stack)     
-
-let rec pop n stack =
-  match n, stack with
-  | 0, _ -> stack
-  | _, [] | _, [_] ->
-     raise Script_error
-  | _, current :: other ->
-     pop (n-1) other
+  let rec get_logic_name_command () =
+    let command =
+      Abstract.command (Parser.command Lexer.token lexbuf) in
+    match command with
+    | Abstract.Set_option _
+    | Abstract.Set_info _
+    | Abstract.Get_option _
+    | Abstract.Get_info _ -> get_logic_name_command ()
+    | Abstract.Set_logic s -> s
+    | _ -> raise Script_error in
+  get_logic_name_command ()
 
 let rec run_in_line_definitions signature term =
   match term with
@@ -109,8 +57,9 @@ let rec run_in_line_definitions signature term =
    - returns the list of (env, assertion lists) couples 
      corresponding to each check-sat command of the script *)
 let get_contexts lexbuf =
-  let logic_signature = logic_signature (get_logic_name lexbuf) in
-  (* - contexts: (env, assertion list) list corresponding to previous check-sat commands
+  let logic_signature =
+    Signature.logic_signature (get_logic_name lexbuf) in
+  (* - contexts: (signature, assertion list) list corresponding to previous check-sat commands
      - stack: current assertion-set stack - (sort bindings, fun bindings, assertions) list *)
   let rec get_contexts_command contexts stack =
     try
@@ -128,31 +77,32 @@ let get_contexts lexbuf =
 	 get_contexts_command
 	   ((signature, assertions) :: contexts) stack
       | Abstract.Push n ->
-	 get_contexts_command contexts (push n stack)
+	 get_contexts_command contexts (Set_stack.push n stack)
       | Abstract.Pop n ->
-	 get_contexts_command contexts (pop n stack)
+	 get_contexts_command contexts (Set_stack.pop n stack)
       | Abstract.Declare_sort (sort_sym, n) ->
-	 get_contexts_command_with_set
-	   (Signature.add_sort
-	      sort_sym
-	      (Signature.Sort_declaration n) signature, assertions)
+	 let newstack =
+	   Set_stack.add_sort
+	     sort_sym (Signature.Sort_declaration n) stack in
+	 get_contexts_command contexts newstack
       | Abstract.Define_sort (sort_sym, pars, par_sort) ->
-	 get_contexts_command_with_set
-	   (Signature.add_sort
-	      sort_sym
-	      (Signature.Sort_definition (pars, par_sort)) signature,
-	    assertions)
+	 let newstack =
+	   Set_stack.add_sort
+	     sort_sym (Signature.Sort_definition (pars, par_sort))
+	     stack in
+	 get_contexts_command contexts newstack
       | Abstract.Declare_fun (fun_sym, sorts, sort) ->
 	 let par_sorts = List.map Abstract.par_sort_of_sort sorts in
 	 let par_sort = Abstract.par_sort_of_sort sort in
-	 get_contexts_command_with_set
+	 let newstack
+	 get_contexts_command contexts
 	   (Signature.add_fun
 	      fun_sym
 	      (Signature.Fun_declaration
 		 [[], par_sorts, par_sort]) signature, assertions)
       | Abstract.Define_fun (fun_sym, sorted_vars, sort, term) ->
 	 let newsignature, newterm = run_in_line_definitions signature term in
-	 get_contexts_command_with_set
+	 get_contexts_command contexts
 	   (Signature.add_fun
 	      fun_sym
 	      (Signature.Fun_definition
@@ -160,7 +110,7 @@ let get_contexts lexbuf =
 	    assertions)
       | Abstract.Assert term ->
 	 let newsignature, newterm = run_in_line_definitions signature term in
-	 get_contexts_command_with_set
+	 get_contexts_command contexts
 	   (newsignature, newterm :: assertions)
       | Abstract.Get_value terms ->
 	 let newsignature =
@@ -168,7 +118,7 @@ let get_contexts lexbuf =
 	     (fun signature term -> 
 	      let newsignature, _ = run_in_line_definitions signature term in
 	      newsignature) signature terms in
-	 get_contexts_command_with_set (newsignature, assertions)
+	 get_contexts_command contexts (newsignature, assertions)
       | Abstract.Set_logic _ ->
 	 raise Script_error
       | _ ->

@@ -79,17 +79,23 @@ type script = command list
 
 (* *** CONCRETE TO ABSTRACT *** *)
 
-module VarsSet =
+(* Variable Environment *)
+		      
+module VarSet =
   Set.Make
     (struct
       type t = variable
       let compare = Pervasives.compare
     end)
 
-let add_vars vars varsset  =
+type varset = VarSet.t
+    
+let add_vars vars var_set =
   List.fold_left
-    (fun varsset var -> VarsSet.add var varsset) varsset vars
+    (fun var_set var -> VarSet.add var var_set) var_set vars
 
+(* Translation functions *)
+    
 let number num = int_of_string num
 let sort_symbol id = id
 let fun_symbol id = Identifier_fun id
@@ -97,6 +103,8 @@ let attribute_name cattr = cattr
 let sort_parameter sym = sym
 let variable sym = sym
 let logic_name sym = sym
+
+(* Sorts *)
 
 let rec sort csort =
   match csort with
@@ -112,21 +120,23 @@ let rec parametric_sort pars csort =
      else Par_sort (sort_symbol (sym, []), [])
   | Concrete.Sort (id, csorts) ->
      Par_sort (sort_symbol id, List.map (parametric_sort pars) csorts)
+
+(* Terms *)
 	      
 let attribute (key, opt) = key, opt
 				  
 let sorted_var (sym, csort) = variable sym, sort csort
 
-let rec var_binding varsset (sym, cterm) =
-  variable sym, term varsset cterm
+let rec var_binding var_set (sym, cterm) =
+  variable sym, term var_set cterm
 
-and term varsset cterm =
+and term var_set cterm =
   match cterm with
   | Concrete.Spec_constant_term const ->
      App (Spec_constant_fun const, None, [])
   | Concrete.Qual_identifier_term (((sym, []) as id), None) ->
      let var = variable sym in
-     if VarsSet.mem var varsset
+     if VarSet.mem var var_set
      then Var var
      else App (fun_symbol id, None, [])
   | Concrete.Qual_identifier_term (id, opt) ->
@@ -134,25 +144,29 @@ and term varsset cterm =
   | Concrete.App_term ((id, opt), cterms) ->
      (* cannot be a variable because cterms is not empty *)
      App (fun_symbol id, Util.option_map sort opt,
-	  List.map (term varsset) cterms)
+	  List.map (term var_set) cterms)
   | Concrete.Let_term (var_bindings, cterm) ->
-     let bindings = List.map (var_binding varsset) var_bindings in
+     let bindings = List.map (var_binding var_set) var_bindings in
      let vars, _ = List.split bindings in
-     Let (bindings, term (add_vars vars varsset) cterm)
+     Let (bindings, term (add_vars vars var_set) cterm)
   | Concrete.Forall_term (csorted_vars, cterm) ->
      let sorted_vars = List.map sorted_var csorted_vars in
      let vars, _ = List.split sorted_vars in
-     Forall (sorted_vars, term (add_vars vars varsset) cterm)
+     Forall (sorted_vars, term (add_vars vars var_set) cterm)
   | Concrete.Exists_term (csorted_vars, cterm) ->
      let sorted_vars = List.map sorted_var csorted_vars in
      let vars, _ = List.split sorted_vars in
-     Exists (sorted_vars, term (add_vars vars varsset) cterm)
+     Exists (sorted_vars, term (add_vars vars var_set) cterm)
   | Concrete.Attributed_term (cterm, cattributes) ->
-     Attributed (term varsset cterm, List.map attribute cattributes)
+     Attributed (term var_set cterm, List.map attribute cattributes)
+
+(* Command options and info names *)
 
 let command_option copt = attribute copt
 
 let info_flag cflag = cflag
+
+(* Commands *)
 	    
 let command ccommand =
   match ccommand with
@@ -178,13 +192,13 @@ let command ccommand =
      Define_fun
        (fun_symbol (sym, []),
 	sorted_vars, sort csort,
-	term (add_vars vars VarsSet.empty) cterm)
+	term (add_vars vars VarSet.empty) cterm)
   | Concrete.Push (num) -> 
      Push (number num)
   | Concrete.Pop (num) -> 
      Pop (number num)
   | Concrete.Assert (cterm) -> 
-     Assert (term VarsSet.empty cterm)
+     Assert (term VarSet.empty cterm)
   | Concrete.Check_sat -> 
      Check_sat
   | Concrete.Get_assertions -> 
@@ -194,7 +208,7 @@ let command ccommand =
   | Concrete.Get_unsat_core -> 
      Get_unsat_core
   | Concrete.Get_value (cterms) -> 
-     Get_value (List.map (term VarsSet.empty) cterms)
+     Get_value (List.map (term VarSet.empty) cterms)
   | Concrete.Get_assignment -> 
      Get_assignment
   | Concrete.Get_option (key) -> 
