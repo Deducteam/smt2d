@@ -52,6 +52,36 @@ type theory_declaration = theory_name * sort_declaration list * par_fun_declarat
 
 type logic_declaration = logic_name * theory_name list
 
+(* Command options and info names *)
+
+type command_option = attribute
+
+type info_flag = attribute_name
+			
+(* Commands *)
+
+type command =
+  | Set_logic of logic_name
+  | Set_option of command_option
+  | Set_info of attribute
+  | Declare_sort of sort_symbol * number
+  | Define_sort of sort_symbol * sort_parameter list * parametric_sort
+  | Declare_fun of fun_symbol * sort list * sort
+  | Define_fun of fun_symbol * (variable * sort) list * sort * term
+  | Push of number
+  | Pop of number
+  | Assert of term
+  | Check_sat
+  | Get_assertions
+  | Get_value of term list
+  | Get_assignment
+  | Get_proof
+  | Get_unsat_core
+  | Get_info of info_flag
+  | Get_option of attribute_name
+  | Exit
+
+		    
 (* *** SIGNATURES *** *)
 
 type sort_data =
