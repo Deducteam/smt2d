@@ -1,3 +1,4 @@
+exception Logic_error
 exception Script_error
 
 (* parse the whole file *)
@@ -34,27 +35,30 @@ let get_logic_name lexbuf =
 	  
 let theory_declaration theory_name =
   match theory_name with
-  | Abstract.Core -> Abstract.core_declaration
-
+  | "Core" -> Abstract.core_declaration
+  | _ -> raise Logic_error
+		
 let logic_declaration logic_name = 
   match logic_name with
-  | Abstract.Qf_uf -> Abstract.qf_uf_declaration 
-  
+  | "QF_UF" -> Abstract.qf_uf_declaration 
+  | _ -> raise Logic_error
+    
 let logic_signature logic_name =
   let _, theory_names = logic_declaration logic_name in
   let theory_declarations =
     List.map theory_declaration theory_names in
-  let empty = Abstract.empty in
+  let empty = Signature.empty in
   List.fold_left 
     (fun env (_, sort_declarations, par_fun_declarations) -> 
      let newenv = 
        List.fold_left 
 	 (fun env (sym, n, _) ->
-	  Abstract.add_sort sym (Abstract.Sort_declaration n) env) 
+	  Signature.add_sort sym (Signature.Sort_declaration n) env) 
 	 env sort_declarations in
      List.fold_left 
        (fun env (pars, sym, sorts, sort, _) -> 
-	Abstract.overload_fun sym (Abstract.Fun_declaration [pars, sorts, sort]) env) 
+        Signature.overload_fun
+	  sym (Signature.Fun_declaration [pars, sorts, sort]) env) 
        newenv par_fun_declarations)
     empty theory_declarations
 
@@ -129,27 +133,29 @@ let get_contexts lexbuf =
 	 get_contexts_command contexts (pop n stack)
       | Abstract.Declare_sort (sort_sym, n) ->
 	 get_contexts_command_with_set
-	   (Abstract.add_sort
-	      sort_sym (Abstract.Sort_declaration n) signature, assertions)
+	   (Signature.add_sort
+	      sort_sym
+	      (Signature.Sort_declaration n) signature, assertions)
       | Abstract.Define_sort (sort_sym, pars, par_sort) ->
 	 get_contexts_command_with_set
-	   (Abstract.add_sort
-	      sort_sym (Abstract.Sort_definition (pars, par_sort)) signature,
+	   (Signature.add_sort
+	      sort_sym
+	      (Signature.Sort_definition (pars, par_sort)) signature,
 	    assertions)
       | Abstract.Declare_fun (fun_sym, sorts, sort) ->
 	 let par_sorts = List.map Abstract.par_sort_of_sort sorts in
 	 let par_sort = Abstract.par_sort_of_sort sort in
 	 get_contexts_command_with_set
-	   (Abstract.add_fun
+	   (Signature.add_fun
 	      fun_sym
-	      (Abstract.Fun_declaration
+	      (Signature.Fun_declaration
 		 [[], par_sorts, par_sort]) signature, assertions)
       | Abstract.Define_fun (fun_sym, sorted_vars, sort, term) ->
 	 let newsignature, newterm = run_in_line_definitions signature term in
 	 get_contexts_command_with_set
-	   (Abstract.add_fun
+	   (Signature.add_fun
 	      fun_sym
-	      (Abstract.Fun_definition
+	      (Signature.Fun_definition
 		 (sorted_vars, sort, newterm)) newsignature,
 	    assertions)
       | Abstract.Assert term ->

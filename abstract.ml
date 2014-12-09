@@ -1,21 +1,16 @@
 (* smtlib2 abstract syntax *)
 
-exception Logic_error
-exception Signature_error
-
 type number = int
 type sort_symbol = Concrete.identifier
 type fun_symbol =
   | Spec_constant_fun of Concrete.spec_constant
   | Identifier_fun of Concrete.identifier
 type attribute_name = Concrete.keyword
-type theory_name = 
-  | Core
+type theory_name = string
 type sort_parameter = Concrete.symbol
 type variable = Concrete.symbol
 type attribute_value = Concrete.attribute_value
-type logic_name = 
-  | Qf_uf
+type logic_name = string
 
 (* Sorts *)
 
@@ -81,38 +76,8 @@ type command =
   | Exit
 
 type script = command list
-		    
-(* *** SIGNATURES *** *)
 
-type sort_data =
-  | Sort_declaration of int
-  | Sort_definition of sort_parameter list * parametric_sort
-
-type fun_data =
-  | Fun_declaration of
-      (sort_parameter list * parametric_sort list * parametric_sort) list
-  | Fun_definition of (variable * sort) list * sort * term
-
-module SortsMap =
-  Map.Make
-    (struct
-      type t = sort_symbol
-      let compare = Pervasives.compare
-    end)
-
-module FunsMap =
-  Map.Make
-    (struct
-      type t = fun_symbol
-      let compare = Pervasives.compare
-    end)
-
-module VarsMap =
-  Map.Make
-    (struct
-      type t = variable
-      let compare = Pervasives.compare
-    end)
+(* *** CONCRETE TO ABSTRACT *** *)
 
 module VarsSet =
   Set.Make
@@ -124,71 +89,14 @@ module VarsSet =
 let add_vars vars varsset  =
   List.fold_left
     (fun varsset var -> VarsSet.add var varsset) varsset vars
-    
-(* one can infer a signature from a signature by removing all definitions *)
-type signature = {
-  sorts: sort_data SortsMap.t;
-  funs: fun_data FunsMap.t;
-}
 
-let empty =
-  { sorts = SortsMap.empty;
-    funs = FunsMap.empty;
-  }
-		   
-let add_sort sym data signature =
-  { sorts =
-      if SortsMap.mem sym signature.sorts
-      then raise Signature_error
-      else SortsMap.add sym data signature.sorts;
-    funs = signature.funs;
-  }
-
-let add_fun sym data signature =
-  { sorts = signature.sorts;
-    funs =
-      if FunsMap.mem sym signature.funs
-      then raise Signature_error
-      else FunsMap.add sym data signature.funs;
-  }
-
-let overload_fun sym data signature =
-  { sorts = signature.sorts;
-    funs =
-      if FunsMap.mem sym signature.funs
-      then
-	let envdata = FunsMap.find sym signature.funs in
-	match envdata, data with
-	| Fun_declaration l1, Fun_declaration l2 ->
-	   FunsMap.add sym (Fun_declaration (l1@l2)) signature.funs
-	| _, _ -> raise Signature_error
-      else FunsMap.add sym data signature.funs;
-  }
-
-(* *** CONCRETE TO ABSTRACT *** *)
-
-let number num =
-  int_of_string num
-
-let sort_symbol id =
-  id
-
-let fun_symbol id =
-  Identifier_fun id
-
-let attribute_name cattr =
-  cattr
-		 
-let sort_parameter sym =
-  sym
-
-let variable sym =
-  sym
-
-let logic_name sym =
-  match sym with
-  | "QF_UF" -> Qf_uf
-  | _ -> raise Logic_error
+let number num = int_of_string num
+let sort_symbol id = id
+let fun_symbol id = Identifier_fun id
+let attribute_name cattr = cattr
+let sort_parameter sym = sym
+let variable sym = sym
+let logic_name sym = sym
 
 let rec sort csort =
   match csort with
@@ -205,11 +113,9 @@ let rec parametric_sort pars csort =
   | Concrete.Sort (id, csorts) ->
      Par_sort (sort_symbol id, List.map (parametric_sort pars) csorts)
 	      
-let attribute (key, opt) =
-  key, opt
+let attribute (key, opt) = key, opt
 
-let sorted_var (sym, csort) =
-  variable sym, sort csort
+let sorted_var (sym, csort) = variable sym, sort csort
 
 let rec var_binding varsset (sym, cterm) =
   variable sym, term varsset cterm
@@ -264,11 +170,9 @@ and term varsset cterm =
   | Concrete.Attributed_term (cterm, cattributes) ->
      Attributed (term varsset cterm, List.map attribute cattributes)
 
-let command_option copt =
-  attribute copt
+let command_option copt = attribute copt
 
-let info_flag cflag =
-  cflag
+let info_flag cflag = cflag
 	    
 let command ccommand =
   match ccommand with
@@ -330,7 +234,7 @@ let core_declaration =
   let bool =
     parametric_sort [] (Concrete.Sort (("Bool", []), [])) in
   let a = sort_parameter "A" in
-  Core, 
+  "Core", 
   [sort_symbol ("Bool", []), 0, []], 
   [ [], fun_symbol ("true", []), [], bool, []
   ; [], fun_symbol ("false", []), [], bool, []
@@ -344,5 +248,4 @@ let core_declaration =
   ; [a], fun_symbol ("ite", []), [bool; Par a; Par a], Par a, []
   ]
 
-let qf_uf_declaration = 
-  Qf_uf, [Core]
+let qf_uf_declaration = "QF_UF", ["Core"]

@@ -4,3 +4,4 @@ réécrire les théories avec les fonctions concrete -> abstract
 revoir le systèmes d'exceptions
 analyser le shadowing entre variables et symboles
 faire de sort un sous-type de par_sort ?
+accepter les autres logiques au niveau abstract
