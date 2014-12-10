@@ -25,32 +25,20 @@ let get_logic_name lexbuf =
     | _ -> raise Script_error in
   get_logic_name_command ()
 
-let rec run_in_line_definitions signature term =
+let rec add_in_line_definitions signature def_bindings term =
   match term with
-  | Abstract.Var _ -> signature, term
+  | Abstract.Var _ -> def_bindings
   | Abstract.App (fun_sym, opt, terms) ->
-     let newsignature, newterms_rev = 
-       List.fold_left 
-	 (fun (signature, newterms_rev) term ->
-	  let newsignature, newterm = run_in_line_definitions signature term in
-	  newsignature, newterm :: newterms_rev) (signature, []) terms in
-     newsignature, Abstract.App (fun_sym, opt, List.rev newterms_rev)
-  | Abstract.Let (bindings, term) -> 
-     let newsignature, newterm = run_in_line_definitions signature term in
-     newsignature, Abstract.Let (bindings, newterm)
-  | Abstract.Forall (sorted_vars, term) ->
-     let newsignature, newterm = run_in_line_definitions signature term in
-     newsignature, Abstract.Forall (sorted_vars, newterm)
-  | Abstract.Exists (sorted_vars, term) ->
-     let newsignature, newterm = run_in_line_definitions signature term in
-     newsignature, Abstract.Exists (sorted_vars, newterm)
+     List.fold_left (add_in_line_definitions signature) def_bindings terms
+  | Abstract.Let (_, term)
+  | Abstract.Forall (_, term)
+  | Abstract.Exists (_, term) ->
+     add_in_line_definitions signature def_bindings term 
   | Abstract.Attributed (term, attributes) ->
      let attribute_names, _ = List.split attributes in
      if List.mem ":named" attribute_names
      then raise Error.Not_implemented
-     else 
-       let newsignature, newterm = run_in_line_definitions signature term in
-       newsignature, Abstract.Attributed (newterm, attributes)
+     else add_in_line_definitions signature def_bindings term
 
 (* - finds the first set-logic command and checks that no forbiden command is used before
    - checks that no set-logic command is used after
@@ -61,67 +49,49 @@ let get_contexts lexbuf =
     Signature.logic_signature (get_logic_name lexbuf) in
   (* - contexts: (signature, assertion list) list corresponding to previous check-sat commands
      - stack: current assertion-set stack - (sort bindings, fun bindings, assertions) list *)
-  let rec get_contexts_command contexts stack =
+  let stack = Set_stack.create logic_signature in
+  let contexts = ref [] in
+  let rec get_contexts_command () =
     try
-      let signature, assertions, sets = 
-	match stack with
-	| (signature, assertions) :: sets -> signature, assertions, sets
-	| [] -> assert false in
-      let command =
-	Abstract.command (Parser.command Lexer.token lexbuf) in
-      (* pop function allows to assert assert that the stack has a head *)
-      let get_contexts_command_with_set set =
-	get_contexts_command contexts (set :: sets) in
-      match command with
-      | Abstract.Check_sat ->
-	 get_contexts_command
-	   ((signature, assertions) :: contexts) stack
-      | Abstract.Push n ->
-	 get_contexts_command contexts (Set_stack.push n stack)
-      | Abstract.Pop n ->
-	 get_contexts_command contexts (Set_stack.pop n stack)
-      | Abstract.Declare_sort (sort_sym, n) ->
-	 let newstack =
-	   Set_stack.add_sort
-	     sort_sym (Signature.Sort_declaration n) stack in
-	 get_contexts_command contexts newstack
-      | Abstract.Define_sort (sort_sym, pars, par_sort) ->
-	 let newstack =
-	   Set_stack.add_sort
-	     sort_sym (Signature.Sort_definition (pars, par_sort))
-	     stack in
-	 get_contexts_command contexts newstack
-      | Abstract.Declare_fun (fun_sym, sorts, sort) ->
-	 let par_sorts = List.map Abstract.par_sort_of_sort sorts in
-	 let par_sort = Abstract.par_sort_of_sort sort in
-	 let newstack
-	 get_contexts_command contexts
-	   (Signature.add_fun
-	      fun_sym
-	      (Signature.Fun_declaration
-		 [[], par_sorts, par_sort]) signature, assertions)
-      | Abstract.Define_fun (fun_sym, sorted_vars, sort, term) ->
-	 let newsignature, newterm = run_in_line_definitions signature term in
-	 get_contexts_command contexts
-	   (Signature.add_fun
-	      fun_sym
-	      (Signature.Fun_definition
-		 (sorted_vars, sort, newterm)) newsignature,
-	    assertions)
-      | Abstract.Assert term ->
-	 let newsignature, newterm = run_in_line_definitions signature term in
-	 get_contexts_command contexts
-	   (newsignature, newterm :: assertions)
-      | Abstract.Get_value terms ->
-	 let newsignature =
-	   List.fold_left 
-	     (fun signature term -> 
-	      let newsignature, _ = run_in_line_definitions signature term in
-	      newsignature) signature terms in
-	 get_contexts_command contexts (newsignature, assertions)
-      | Abstract.Set_logic _ ->
-	 raise Script_error
-      | _ ->
-	 get_contexts_command contexts stack
-    with End_of_file -> List.rev contexts in
-  get_contexts_command [] [(logic_signature,[])]
+      let command = Abstract.command (Parser.command Lexer.token lexbuf) in
+      begin 
+	match command with
+	| Abstract.Check_sat -> contexts := (Set_stack.all stack) :: !contexts
+	| Abstract.Push n -> Set_stack.push stack n
+	| Abstract.Pop n -> Set_stack.pop stack n
+	| Abstract.Declare_sort (sort_sym, n) ->
+	   Set_stack.add_sort stack sort_sym (Signature.Sort_declaration n)
+	| Abstract.Define_sort (sort_sym, pars, par_sort) ->
+	   Set_stack.add_sort stack sort_sym (Signature.Sort_definition (pars, par_sort))
+	| Abstract.Declare_fun (fun_sym, sorts, sort) ->
+	   let par_sorts = List.map Abstract.par_sort_of_sort sorts in
+	   let par_sort = Abstract.par_sort_of_sort sort in
+	   Set_stack.add_fun 
+	     stack fun_sym (Signature.Fun_declaration [[], par_sorts, par_sort])
+	| Abstract.Define_fun (fun_sym, sorted_vars, sort, term) ->
+	   let signature, _ = Set_stack.all stack in
+	   let def_bindings = add_in_line_definitions signature [] term in
+	   List.iter 
+	     (fun (fun_sym, fun_data) -> Set_stack.add_fun stack fun_sym fun_data) 
+	     (List.rev def_bindings);
+	   Set_stack.add_fun
+	     stack fun_sym (Signature.Fun_definition (sorted_vars, sort, term))
+	| Abstract.Assert term ->
+	   let signature, _ = Set_stack.all stack in
+	   let def_bindings = add_in_line_definitions signature [] term in
+	   List.iter 
+	     (fun (fun_sym, fun_data) -> Set_stack.add_fun stack fun_sym fun_data) 
+	     (List.rev def_bindings);
+	   Set_stack.add_assertion stack term;
+	| Abstract.Get_value terms ->
+	   let signature, _ = Set_stack.all stack in
+	   let def_bindings = List.fold_left (add_in_line_definitions signature) [] terms in
+	   List.iter 
+	     (fun (fun_sym, fun_data) -> Set_stack.add_fun stack fun_sym fun_data) 
+	     (List.rev def_bindings);
+	| Abstract.Set_logic _ ->
+	   raise Script_error
+	| _ -> () end;
+      get_contexts_command ()
+    with End_of_file -> List.rev !contexts in
+  get_contexts_command ()

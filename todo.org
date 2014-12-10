@@ -1,8 +1,2 @@
-sortir les données de Core et Qf_uf de abstract ?
-séparer assertion_list dans un module à part ?
-réécrire les théories avec les fonctions concrete -> abstract
 revoir le systèmes d'exceptions
-analyser le shadowing entre variables et symboles
-faire de sort un sous-type de par_sort ?
-accepter les autres logiques au niveau abstract
-prendre un stack pour modéliser set-stack ?
+ajouter des commentaires

@@ -2,29 +2,48 @@
 
 exception Set_stack_error
 
-(* non empty list *)
-type set_stack = (Signature.signature * Abstract.term list) list
-	    
-let rec push n stack =
-  match n, stack with
-  | _, [] -> raise Set_stack_error
-  | 0, _ -> stack
-  | _, current :: other -> push (n-1) (current :: stack)     
+type set_stack = (Signature.signature * Abstract.term list) Stack.t
 
-let rec pop n stack =
-  match n, stack with
-  | 0, _ -> stack
-  | _, [] | _, [_] -> raise Set_stack_error
-  | _, current :: other -> pop (n-1) other
+let create signature =
+  let stack = Stack.create () in
+  Stack.push (signature, []) stack;
+  stack
 
-let add_sort sort_sym sort_data stack =
-  match stack with
-  | (signature, current) :: sets -> 
-     (Signature.add_sort sort_sym sort_data signature, current) :: sets
-  | _ -> assert false
+let all stack = Stack.top stack
 
-let add_fun fun_sym fun_data stack =
-  match stack with
-  | (signature, current) :: sets -> 
-     (Signature.add_fun fun_sym fun_data signature, current) :: sets
-  | _ -> assert false
+let rec push stack n =
+  match n with
+  | 0 -> ()
+  | _ -> 
+     let all = all stack in
+     Stack.push all stack;
+     push stack (n-1)
+	  
+let rec pop stack n =
+  match n with
+  | 0 -> ()
+  | _ -> 
+     try
+       let _ = Stack.pop stack in
+       let _ = pop stack (n-1) in ()
+     with
+     | Stack.Empty -> raise Set_stack_error
+
+let add_sort stack sort_sym sort_data =
+  let (signature, assertions) = Stack.pop stack in
+  Stack.push
+    (Signature.add_sort sort_sym sort_data signature, assertions)
+    stack
+
+let add_fun stack fun_sym fun_data =
+  let (signature, assertions) = Stack.pop stack in
+  Stack.push
+    (Signature.add_fun fun_sym fun_data signature, assertions)
+    stack
+
+let add_assertion stack assertion =
+  let (signature, assertions) = Stack.pop stack in
+  Stack.push
+    (signature, assertion :: assertions)
+    stack
+  

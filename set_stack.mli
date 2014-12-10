@@ -2,15 +2,18 @@
 
 exception Set_stack_error
 
-(* non empty list *)
-type set_stack = (Signature.signature * Abstract.term list) list
-	    
-val push: int -> set_stack -> set_stack
+type set_stack
+
+val create: Signature.signature -> set_stack
+
+val all: set_stack -> Signature.signature * Abstract.term list
+
+val push: set_stack -> int -> unit
 			    
-val pop: int -> set_stack -> set_stack
+val pop: set_stack -> int -> unit
 
-val add_sort: Abstract.sort_symbol -> Signature.sort_data
-	      -> set_stack -> set_stack
+val add_sort: set_stack -> Abstract.sort_symbol -> Signature.sort_data -> unit
 
-val add_fun: Abstract.fun_symbol -> Signature.fun_data
-	      -> set_stack -> set_stack
+val add_fun: set_stack -> Abstract.fun_symbol -> Signature.fun_data -> unit
+
+val add_assertion: set_stack -> Abstract.term -> unit
