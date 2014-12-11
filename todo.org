@@ -1,2 +1,6 @@
 revoir le systèmes d'exceptions
 ajouter des commentaires
+privatiser abstract et ajouter fonctions ?
+séparer Concr->Abs ?
+changer l'écriture des constantes ?
+faire atterrir unfold dans un nouvel ast, typé ou non ?

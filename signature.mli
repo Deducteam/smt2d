@@ -23,4 +23,9 @@ val add_sort:
 val add_fun:
   Abstract.fun_symbol -> fun_data -> signature -> signature
 
+val find_sort:
+  Abstract.sort_symbol -> signature -> sort_data
+val find_fun:
+  Abstract.fun_symbol -> signature -> fun_data 
+						    
 val logic_signature: Abstract.logic_name -> signature

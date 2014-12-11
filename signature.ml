@@ -71,6 +71,12 @@ let add_fun sym data signature =
       then raise Signature_error
       else FunMap.add sym data signature.funs;
   }
+
+let find_sort sort_sym signature =
+  SortMap.find sort_sym signature.sorts
+
+let find_fun fun_sym signature =
+  FunMap.find fun_sym signature.funs
     
 let logic_signature logic_name =
   let _, theory_names = Logic.logic_declaration logic_name in

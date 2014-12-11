@@ -245,7 +245,7 @@ let core_declaration =
   let a_sort =
     parametric_sort [a_par] (Concrete.Sort ((a_sym, []), [])) in
   core,
-  [sort_symbol bool_id, 0, []], 
+  [sort_symbol bool_id, 0, []],
   [ [], fun_symbol true_id, [], bool_sort, []
   ; [], fun_symbol false_id, [], bool_sort, []
   ; [], fun_symbol not_id, [bool_sort], bool_sort, []
