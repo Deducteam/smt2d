@@ -10,7 +10,7 @@ type sort_data =
 type fun_data =
   | Theory_fun_declaration of
       (Abstract.sort_parameter list *
-	 Abstract.parametric_sort list * Abstract.parametric_sort) list
+	 Abstract.parametric_sort list * Abstract.parametric_sort * Abstract.attribute list) list
   | User_fun_declaration of Abstract.sort list * Abstract.sort
   | Fun_definition of
       (Abstract.variable * Abstract.sort) list *

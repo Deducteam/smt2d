@@ -37,7 +37,15 @@ let rec get_par_bindings bindings par_sort_assocs =
 let rec get_rank ranks sorts =
   match ranks with
   | [] -> raise Sort_error
-  | (pars, par_sorts, par_sort) :: ranks ->
+  | (pars, par_sorts, par_sort, attributes) :: ranks ->
+     let par_sorts =
+       match par_sorts, attributes with
+       | [par_sort; _], [":chainable", None]
+       | [par_sort; _], [":left-assoc", None]
+       | [par_sort; _], [":right-assoc", None]
+       | [par_sort; _], [":pairwise", None] ->
+	  List.map (fun _ -> par_sort) sorts
+       | _, _ -> par_sorts in
      if List.length par_sorts != List.length sorts 
      then get_rank ranks sorts
      else

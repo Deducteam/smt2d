@@ -10,7 +10,7 @@ type sort_data =
 type fun_data =
   | Theory_fun_declaration of
       (Abstract.sort_parameter list *
-	 Abstract.parametric_sort list * Abstract.parametric_sort) list
+	 Abstract.parametric_sort list * Abstract.parametric_sort * Abstract.attribute list) list
   | User_fun_declaration of Abstract.sort list * Abstract.sort
   | Fun_definition of
       (Abstract.variable * Abstract.sort) list *
@@ -112,8 +112,8 @@ let logic_signature logic_name =
 	  add_sort sym (Sort_declaration n) env) 
 	 env sort_declarations in
      List.fold_left 
-       (fun env (pars, sym, sorts, sort, _) -> 
+       (fun env (pars, sym, sorts, sort, attributes) -> 
         overload_fun
-	  sym (Theory_fun_declaration [pars, sorts, sort]) env) 
+	  sym (Theory_fun_declaration [pars, sorts, sort, attributes]) env) 
        newenv par_fun_declarations)
     empty theory_declarations
