@@ -224,6 +224,15 @@ let rec par_sort_of_sort sort =
   | Sort (sort_sym, sorts) ->
      Par_sort (sort_sym, List.map par_sort_of_sort sorts)
        
+(* *** UTILS *** *)
+
+let rec substitute_par_sort bindings par_sort =
+  match par_sort with
+  | Par par -> List.assoc par bindings
+  | Par_sort (sort_sym, par_sorts) -> 
+     Sort (sort_sym, List.map (substitute_par_sort bindings) par_sorts)
+
+
 (* *** CONSTANTS *** *)
 
 let core_declaration =

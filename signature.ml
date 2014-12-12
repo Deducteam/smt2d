@@ -8,9 +8,10 @@ type sort_data =
       Abstract.sort_parameter list * Abstract.parametric_sort
 
 type fun_data =
-  | Fun_declaration of
+  | Theory_fun_declaration of
       (Abstract.sort_parameter list *
 	 Abstract.parametric_sort list * Abstract.parametric_sort) list
+  | User_fun_declaration of Abstract.sort list * Abstract.sort
   | Fun_definition of
       (Abstract.variable * Abstract.sort) list *
 	Abstract.sort * Abstract.term
@@ -28,10 +29,18 @@ module FunMap =
       type t = Abstract.fun_symbol
       let compare = Pervasives.compare
     end)
+
+module VarMap =
+  Map.Make
+    (struct
+      type t = Abstract.variable
+      let compare = Pervasives.compare
+    end)
     
 type signature = {
   sorts: sort_data SortMap.t;
   funs: fun_data FunMap.t;
+  vars: Abstract.sort VarMap.t
 }
 
 (* Internal functions *)
@@ -39,6 +48,7 @@ type signature = {
 let empty =
   { sorts = SortMap.empty;
     funs = FunMap.empty;
+    vars = VarMap.empty
   }
 
 let overload_fun sym data signature =
@@ -48,10 +58,11 @@ let overload_fun sym data signature =
       then
 	let envdata = FunMap.find sym signature.funs in
 	match envdata, data with
-	| Fun_declaration l1, Fun_declaration l2 ->
-	   FunMap.add sym (Fun_declaration (l1@l2)) signature.funs
+	| Theory_fun_declaration l1, Theory_fun_declaration l2 ->
+	   FunMap.add sym (Theory_fun_declaration (l1@l2)) signature.funs
 	| _, _ -> raise Signature_error
       else FunMap.add sym data signature.funs;
+    vars = signature.vars;
   }
 
 (* Exported functions *)
@@ -62,6 +73,7 @@ let add_sort sym data signature =
       then raise Signature_error
       else SortMap.add sym data signature.sorts;
     funs = signature.funs;
+    vars = signature.vars;
   }
 
 let add_fun sym data signature =
@@ -70,13 +82,23 @@ let add_fun sym data signature =
       if FunMap.mem sym signature.funs
       then raise Signature_error
       else FunMap.add sym data signature.funs;
+    vars = signature.vars;
   }
 
-let find_sort sort_sym signature =
+let add_var var sort signature =
+  { sorts = signature.sorts;
+    funs = signature.funs;
+    vars = VarMap.add var sort signature.vars;
+  }
+
+let find_sort_data sort_sym signature =
   SortMap.find sort_sym signature.sorts
 
-let find_fun fun_sym signature =
+let find_fun_data fun_sym signature =
   FunMap.find fun_sym signature.funs
+
+let find_var_sort var signature =
+  VarMap.find var signature.vars
     
 let logic_signature logic_name =
   let _, theory_names = Logic.logic_declaration logic_name in
@@ -92,6 +114,6 @@ let logic_signature logic_name =
      List.fold_left 
        (fun env (pars, sym, sorts, sort, _) -> 
         overload_fun
-	  sym (Fun_declaration [pars, sorts, sort]) env) 
+	  sym (Theory_fun_declaration [pars, sorts, sort]) env) 
        newenv par_fun_declarations)
     empty theory_declarations

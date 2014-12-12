@@ -64,10 +64,8 @@ let get_contexts lexbuf =
 	| Abstract.Define_sort (sort_sym, pars, par_sort) ->
 	   Set_stack.add_sort stack sort_sym (Signature.Sort_definition (pars, par_sort))
 	| Abstract.Declare_fun (fun_sym, sorts, sort) ->
-	   let par_sorts = List.map Abstract.par_sort_of_sort sorts in
-	   let par_sort = Abstract.par_sort_of_sort sort in
 	   Set_stack.add_fun 
-	     stack fun_sym (Signature.Fun_declaration [[], par_sorts, par_sort])
+	     stack fun_sym (Signature.User_fun_declaration (sorts, sort))
 	| Abstract.Define_fun (fun_sym, sorted_vars, sort, term) ->
 	   let signature, _ = Set_stack.all stack in
 	   let def_bindings = add_in_line_definitions signature [] term in

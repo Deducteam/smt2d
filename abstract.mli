@@ -83,8 +83,9 @@ val term: varset -> Concrete.term -> term
 		      
 val command: Concrete.command -> command
 
-(* Sorts are parametric sorts *)
-val par_sort_of_sort: sort -> parametric_sort
+(* *** UTILS *** *)
+
+val substitute_par_sort: (sort_parameter * sort) list -> parametric_sort -> sort
 
 (* *** CONSTANTS *** *)
 
