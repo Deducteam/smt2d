@@ -1,12 +1,14 @@
 (* smtlib2 abstract syntax *)
 
 type number = int
-type sort_symbol
-type fun_symbol
+type sort_symbol = Concrete.identifier
+type fun_symbol =
+  | Spec_constant_fun of Concrete.spec_constant
+  | Identifier_fun of Concrete.identifier
 type attribute_name = string
 type theory_name = string
-type sort_parameter
-type variable
+type sort_parameter = Concrete.symbol
+type variable = Concrete.symbol
 type attribute_value
 type logic_name = string
 

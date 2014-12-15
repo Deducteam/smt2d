@@ -16,6 +16,7 @@ let rec print_const out const =
   | Dedukti.Lfalse -> output_string out "logic.False"
   | Dedukti.Leq -> output_string out "logic.equal"
   | Dedukti.Lprf -> output_string out "logic.prf"
+  | Dedukti.Sort -> output_string out "smt2.Sort"
 
 let rec print_term out term =
   match term with

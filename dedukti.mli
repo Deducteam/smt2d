@@ -15,6 +15,7 @@ type const = private
   | Lor
   | Leq
   | Lprf
+  | Sort
 
 (* Dedukti term *)
 type term = private
@@ -50,6 +51,7 @@ val l_and : term -> term -> term
 val l_or : term -> term -> term
 val l_eq : term -> term -> term
 val l_prf : term -> term
+val sort : term
 
 (* Building Dedukti lines *)
 val declaration : term -> term -> line

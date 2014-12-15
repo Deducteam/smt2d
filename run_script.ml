@@ -60,7 +60,7 @@ let get_contexts lexbuf =
 	| Abstract.Push n -> Set_stack.push stack n
 	| Abstract.Pop n -> Set_stack.pop stack n
 	| Abstract.Declare_sort (sort_sym, n) ->
-	   Set_stack.add_sort stack sort_sym (Signature.Sort_declaration n)
+	   Set_stack.add_sort stack sort_sym (Signature.User_sort_declaration n)
 	| Abstract.Define_sort (sort_sym, pars, par_sort) ->
 	   Set_stack.add_sort stack sort_sym (Signature.Sort_definition (pars, par_sort))
 	| Abstract.Declare_fun (fun_sym, sorts, sort) ->
@@ -94,6 +94,15 @@ let get_contexts lexbuf =
     with End_of_file -> List.rev !contexts in
   get_contexts_command ()
 
+(* There must exists a unique check_sat in the script *)
 let print_context file lexbuf =
-  let prelude = Translate.prelude file in
-  Print.print_line stdout prelude
+  let prelude = Translate.translate_prelude file in
+  Print.print_line stdout prelude;
+  let contexts = get_contexts lexbuf in
+  match contexts with
+  | [signature, assertions] -> 
+     let sort_context = Translate.translate_sort_context signature in
+     List.iter (Print.print_line stdout) sort_context;
+     let fun_context = Translate.translate_fun_context signature in
+     List.iter (Print.print_line stdout) fun_context
+  | _ -> raise Script_error

@@ -3,7 +3,8 @@
 exception Signature_error
 
 type sort_data =
-  | Sort_declaration of int
+  | Theory_sort_declaration of int
+  | User_sort_declaration of int
   | Sort_definition of
       Abstract.sort_parameter list * Abstract.parametric_sort
 
@@ -100,6 +101,13 @@ let find_fun_data fun_sym signature =
 let find_var_sort var signature =
   VarMap.find var signature.vars
     
+let fold_sorts f signature b =
+  SortMap.fold f signature.sorts b
+let fold_funs f signature b =
+  FunMap.fold f signature.funs b
+let fold_vars f signature b =
+  VarMap.fold f signature.vars b
+
 let logic_signature logic_name =
   let _, theory_names = Logic.logic_declaration logic_name in
   let theory_declarations =
@@ -109,7 +117,7 @@ let logic_signature logic_name =
      let newenv = 
        List.fold_left 
 	 (fun env (sym, n, _) ->
-	  add_sort sym (Sort_declaration n) env) 
+	  add_sort sym (Theory_sort_declaration n) env) 
 	 env sort_declarations in
      List.fold_left 
        (fun env (pars, sym, sorts, sort, attributes) -> 
