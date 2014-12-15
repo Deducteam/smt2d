@@ -3,7 +3,9 @@
 SMTLIBDIR = smtlib2/QF_UF
 BENCHDIR = bench
 BENCHSMTS = $(shell find $(BENCHDIR) -name "*.smt2")
-BENCHCHECKS_NEEDED = $(BENCHSMTS:.smt2=.chk)
+BENCHDKS_NEEDED = $(BENCHSMTS:.smt2=.dk)
+BENCHDKS = $(shell find $(BENCHDIR) -name "*.dk")
+BENCHDKTS_NEEDED = $(BENCHDKS:.dk=.dkt)
 
 all: check
 
@@ -15,10 +17,13 @@ clean:
 	rm -f check *~ *\#
 	ocamlbuild -clean
 
-%.chk: %.smt2
-	./check $<
+%.dkt: %.dk
+	dkcheck $<
 
-bench: check $(BENCHDIR)/.dummy $(BENCHCHECKS_NEEDED)
+%.dk: %.smt2
+	./check $< > $@
+
+bench: check $(BENCHDIR)/.dummy $(BENCHDKS_NEEDED) $(BENCHDKTS_NEEDED)
 
 $(BENCHDIR)/.dummy:
 	[ -e $(BENCHIR) ] || mkdir $(BENCHDIR)

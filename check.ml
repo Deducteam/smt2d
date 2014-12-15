@@ -25,13 +25,18 @@ let check_get_contexts_sorts file =
       (fun (signature, assertions) ->
        List.map (Get_sort.get_sort signature) assertions)
       contexts in ()
+
+(* There must exists a unique check_sat in the script *)
+let check_print_context file =
+  let chan = open_in file in
+  let lexbuf = Lexing.from_channel chan in
+  Run_script.print_context file lexbuf
 					      
 let check_file file = 
-  fprintf stdout "checking file %s: " file;
-  check_get_script file;
-  check_get_contexts file; (* à enlever *)
-  check_get_contexts_sorts file;
-  fprintf stdout "OK\n"
+  (* check_get_script file; *)
+  (* check_get_contexts file; *)
+  (* check_get_contexts_sorts file; *)
+  check_print_context file
   
 let () =
   Arg.parse argspec (fun f -> files := f :: !files) umsg;

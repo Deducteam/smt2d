@@ -93,3 +93,7 @@ let get_contexts lexbuf =
       get_contexts_command ()
     with End_of_file -> List.rev !contexts in
   get_contexts_command ()
+
+let print_context file lexbuf =
+  let prelude = Translate.prelude file in
+  Print.print_line stdout prelude
