@@ -14,6 +14,8 @@ type const =
   | Leq
   | Lprf
   | Sort
+  | Term
+  | Bool
 
 type term = 
   | Var of var
@@ -51,6 +53,8 @@ let l_or p q = app3 (Const Lor) p q
 let l_eq t1 t2 = app3 (Const Leq) t1 t2
 let l_prf t = app2 (Const Lprf) t
 let sort = Const Sort
+let term t = app2 (Const Term) t
+let bool = Const Bool
 
 let declaration t term = Declaration (t, term)
 let definition t termtype term = Definition (t, termtype, term)

@@ -94,7 +94,7 @@ let get_contexts lexbuf =
     with End_of_file -> List.rev !contexts in
   get_contexts_command ()
 
-(* There must exists a unique check_sat in the script *)
+(* There must exist a unique check_sat in the script *)
 let print_context file lexbuf =
   let prelude = Translate.translate_prelude file in
   Print.print_line stdout prelude;

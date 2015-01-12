@@ -1,6 +1,6 @@
 .PHONY: all clean bench cleanbench
 
-SMTLIBDIR = smtlib2/QF_UF/QG-classification/qg5
+SMTLIBDIR = smtlib2/QF_UF
 BENCHDIR = bench
 BENCHSMTS = $(shell find $(BENCHDIR) -name "*.smt2")
 BENCHDKS_NEEDED = $(BENCHSMTS:.smt2=.dk)
@@ -26,7 +26,7 @@ clean:
 %.dk: %.smt2
 	./check $< > $@
 
-bench: check $(BENCHDIR)/.dummy $(BENCHDKS_NEEDED) $(BENCHDKTS_NEEDED)
+bench: all $(BENCHDIR)/.dummy $(BENCHDKS_NEEDED) $(BENCHDKTS_NEEDED)
 
 $(BENCHDIR)/.dummy:
 	[ -e $(BENCHIR) ] || mkdir $(BENCHDIR)
