@@ -1,0 +1,2 @@
+- Only the first check_sat is processed
+- Core must be the only theory defining "and"

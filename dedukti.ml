@@ -2,20 +2,20 @@ type ident = string
 
 type var = string
 
-type const = 
+type const =
+  | Lsort
   | Lterm
-  | Lprop
+  | Lbool
   | Ltrue
   | Lfalse
   | Lnot
   | Limply
   | Land
   | Lor
+  | Lxor
   | Leq
-  | Lprf
-  | Sort
-  | Term
-  | Bool
+  | Lneq
+  | Lite
 
 type term = 
   | Var of var
@@ -42,19 +42,19 @@ let app2 t1 t2 = app t1 [t2]
 let app3 t1 t2 t3 = app t1 [t2; t3]
 let arrow t1 t2 = Arrow (t1, t2)
 
-let l_term = Const Lterm
-let l_prop = Const Lprop
+let l_sort = Const Lsort
+let l_term t = app2 (Const Lterm) t
+let l_bool = Const Lbool
 let l_true = Const Ltrue
 let l_false = Const Lfalse
 let l_not p = app2 (Const Lnot) p
 let l_imply p q = app3 (Const Limply) p q
 let l_and p q = app3 (Const Land) p q
 let l_or p q = app3 (Const Lor) p q
-let l_eq t1 t2 = app3 (Const Leq) t1 t2
-let l_prf t = app2 (Const Lprf) t
-let sort = Const Sort
-let term t = app2 (Const Term) t
-let bool = Const Bool
+let l_xor p q = app3 (Const Lor) p q
+let l_eq s t1 t2 = app (Const Leq) [s; t1; t2]
+let l_neq s t1 t2 = app (Const Lneq) [s; t1; t2]
+let l_ite s b t1 t2 = app (Const Lite) [s; b; t1; t2]
 
 let declaration t term = Declaration (t, term)
 let definition t termtype term = Definition (t, termtype, term)

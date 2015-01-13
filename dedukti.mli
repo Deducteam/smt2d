@@ -5,19 +5,19 @@ type ident = string
 type var = string
 
 type const = private
+  | Lsort
   | Lterm
-  | Lprop
+  | Lbool
   | Ltrue
   | Lfalse
   | Lnot
   | Limply
   | Land
   | Lor
+  | Lxor
   | Leq
-  | Lprf
-  | Sort
-  | Term
-  | Bool
+  | Lneq
+  | Lite
 
 (* Dedukti term *)
 type term = private
@@ -43,19 +43,19 @@ val app3 : term -> term -> term -> term
 val arrow : term -> term -> term
 
 (* Building Dedukti terms in the logic.dk context *)
-val l_term : term
-val l_prop : term
+val l_sort : term
+val l_term : term -> term
+val l_bool : term
 val l_true : term
 val l_false : term
 val l_not : term -> term
 val l_imply : term -> term -> term
 val l_and : term -> term -> term
 val l_or : term -> term -> term
-val l_eq : term -> term -> term
-val l_prf : term -> term
-val sort : term
-val term : term -> term
-val bool : term
+val l_xor : term -> term -> term
+val l_eq : term -> term -> term -> term
+val l_neq : term -> term -> term -> term
+val l_ite : term -> term -> term -> term -> term
 
 (* Building Dedukti lines *)
 val declaration : term -> term -> line

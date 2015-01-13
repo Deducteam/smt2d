@@ -91,5 +91,17 @@ val substitute_par_sort: (sort_parameter * sort) list -> parametric_sort -> sort
 
 (* *** CONSTANTS *** *)
 
+val bool_id: Concrete.identifier
+val true_id: Concrete.identifier
+val false_id: Concrete.identifier
+val not_id: Concrete.identifier
+val imply_id: Concrete.identifier
+val and_id: Concrete.identifier
+val or_id: Concrete.identifier
+val xor_id: Concrete.identifier
+val equal_id: Concrete.identifier
+val distinct_id: Concrete.identifier
+val ite_id: Concrete.identifier
+
 val core_declaration: theory_declaration
 val qf_uf_declaration: logic_declaration  

@@ -1,4 +1,0 @@
-#NAME smt2.
-Sort: Type.
-Term: Sort -> Type.
-Bool: Sort.

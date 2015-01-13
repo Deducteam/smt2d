@@ -89,3 +89,15 @@ let rec get_sort signature term =
      get_sort newsignature term
   | Abs.Attributed (term, _) -> 
      get_sort signature term
+
+let rec get_par_sort signature par par_sorts terms =
+  match par_sorts, terms with
+  | Abs.Par p :: par_sorts, term :: terms -> 
+     if p = par 
+     then get_sort signature term
+     else get_par_sort signature par par_sorts terms
+  | Abs.Par_sort (_, p_sorts) :: par_sorts, 
+    Abs.App (_, _, ts) :: terms -> 
+     get_par_sort signature par (p_sorts @ par_sorts) (ts @ terms)
+  | _, _ -> raise Sort_error
+  

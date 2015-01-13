@@ -6,19 +6,19 @@ let print_var out var = fprintf out "%s" var
 
 let rec print_const out const =
   match const with
+  | Dedukti.Lsort -> output_string out "logic.Sort"
   | Dedukti.Lterm -> output_string out "logic.Term"
-  | Dedukti.Lprop -> output_string out "logic.Prop"
+  | Dedukti.Lbool -> output_string out "logic.Bool"
+  | Dedukti.Ltrue -> output_string out "logic.true"
+  | Dedukti.Lfalse -> output_string out "logic.false"
   | Dedukti.Lnot -> output_string out "logic.not"
+  | Dedukti.Limply -> output_string out "logic.imply"
   | Dedukti.Land -> output_string out "logic.and"
   | Dedukti.Lor -> output_string out "logic.or"
-  | Dedukti.Limply -> output_string out "logic.imply"
-  | Dedukti.Ltrue -> output_string out "logic.True"
-  | Dedukti.Lfalse -> output_string out "logic.False"
+  | Dedukti.Lxor -> output_string out "logic.xor"
   | Dedukti.Leq -> output_string out "logic.equal"
-  | Dedukti.Lprf -> output_string out "logic.prf"
-  | Dedukti.Sort -> output_string out "smt2.Sort"
-  | Dedukti.Term -> output_string out "smt2.Term"
-  | Dedukti.Bool -> output_string out "smt2.Bool"
+  | Dedukti.Lneq -> output_string out "logic.distinct"
+  | Dedukti.Lite -> output_string out "logic.ite"
 
 let rec print_term out term =
   match term with

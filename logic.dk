@@ -1,0 +1,14 @@
+#NAME logic.
+Sort: Type.
+Term: Sort -> Type.
+Bool: Sort.
+true: Term Bool.
+false: Term Bool.
+not: Term Bool -> Term Bool.
+imply: Term Bool -> Term Bool -> Term Bool.
+and: Term Bool -> Term Bool -> Term Bool.
+or: Term Bool -> Term Bool -> Term Bool.
+xor: Term Bool -> Term Bool -> Term Bool.
+equal: S:Sort -> Term S -> Term S -> Term Bool.
+distinct: S:Sort -> Term S -> Term S -> Term Bool.
+ite: S:Sort -> Term Bool -> Term S -> Term S -> Term S.

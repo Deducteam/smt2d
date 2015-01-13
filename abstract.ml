@@ -232,28 +232,27 @@ let rec substitute_par_sort bindings par_sort =
   | Par_sort (sort_sym, par_sorts) -> 
      Sort (sort_sym, List.map (substitute_par_sort bindings) par_sorts)
 
-
 (* *** CONSTANTS *** *)
 
+let bool_id = "Bool", []
+let true_id = "true", []
+let false_id = "false", []
+let not_id = "not", []
+let imply_id = "=>", []
+let and_id = "and", []
+let or_id = "or", []
+let xor_id = "xor", []
+let equal_id = "=", []
+let distinct_id = "distinct", []
+let ite_id = "ite", []
+
 let core_declaration =
-  let bool_id = "Bool", [] in
-  let true_id = "true", [] in
-  let false_id = "false", [] in
-  let not_id = "not", [] in
-  let imply_id = "=>", [] in
-  let and_id = "and", [] in
-  let or_id = "or", [] in
-  let xor_id = "xor", [] in
-  let equal_id = "=", [] in
-  let distinct_id = "distinct", [] in
-  let ite_id = "ite", [] in
   let a_sym = "A" in
-  let core = "Core" in
   let bool_sort = parametric_sort [] (Concrete.Sort (bool_id, [])) in
   let a_par = sort_parameter a_sym in
   let a_sort =
     parametric_sort [a_par] (Concrete.Sort ((a_sym, []), [])) in
-  core,
+  "Core",
   [sort_symbol bool_id, 0, []],
   [ [], fun_symbol true_id, [], bool_sort, []
   ; [], fun_symbol false_id, [], bool_sort, []

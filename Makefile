@@ -7,7 +7,7 @@ BENCHDKS_NEEDED = $(BENCHSMTS:.smt2=.dk)
 BENCHDKS = $(shell find $(BENCHDIR) -name "*.dk")
 BENCHDKTS_NEEDED = $(BENCHDKS:.dk=.dkt)
 
-all: check smt2.dko
+all: check logic.dko
 
 %.dko: %.dk
 	dkcheck -e $<
@@ -17,7 +17,7 @@ check: *.ml *.mli *.mll *.mly
 	mv check.native check
 
 clean:
-	rm -f check smt2.dko *~ *\#
+	rm -f check logic.dko *~ *\#
 	ocamlbuild -clean
 
 %.dkt: %.dk
