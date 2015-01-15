@@ -10,7 +10,7 @@ let rec get_par_bindings bindings par_sort_assocs =
   let rec get_result bindings =
     match bindings with
     | [] -> []
-    | ((par, None) :: bindings) -> raise No_match
+    | ((_, None) :: _) -> raise No_match
     | ((par, Some sort) :: bindings) -> (par, sort) :: get_result bindings in
   let rec get_par_bindings_aux bindings par_sort sort =
     match par_sort, sort with
@@ -60,7 +60,7 @@ let rec get_sort signature term =
   match term with
   | Abs.Var var -> 
      Signature.find_var_sort var signature 
-  | Abs.App (fun_sym, Some sort, terms) ->
+  | Abs.App (_, Some sort, _) ->
      sort
   | Abs.App (fun_sym, None, terms) ->
      begin
@@ -90,14 +90,13 @@ let rec get_sort signature term =
   | Abs.Attributed (term, _) -> 
      get_sort signature term
 
-let rec get_par_sort signature par par_sorts terms =
-  match par_sorts, terms with
-  | Abs.Par p :: par_sorts, term :: terms -> 
+let rec get_par_sort signature par par_sorts sorts =
+  match par_sorts, sorts with
+  | Abs.Par p :: par_sorts, sort :: sorts -> 
      if p = par 
-     then get_sort signature term
-     else get_par_sort signature par par_sorts terms
+     then sort
+     else get_par_sort signature par par_sorts sorts
   | Abs.Par_sort (_, p_sorts) :: par_sorts, 
-    Abs.App (_, _, ts) :: terms -> 
-     get_par_sort signature par (p_sorts @ par_sorts) (ts @ terms)
-  | _, _ -> raise Sort_error
-  
+    Abs.Sort ( _, sort_args) :: sorts -> 
+     get_par_sort signature par (p_sorts @ par_sorts) (sort_args @ sorts)
+  | [], _ | _, [] -> raise Sort_error

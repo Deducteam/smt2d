@@ -46,14 +46,14 @@ let translate_sort_symbol signature sort_sym =
   match Signature.find_sort_data sort_sym signature with
   | Signature.Theory_sort_declaration _ ->
      translate_theory_sort_symbol sort_sym
-  | _ -> 
+  | Signature.User_sort_declaration _ | Signature.Sort_definition _ -> 
      Dk.var ("S"^(translate_identifier sort_sym))
 
-let translate_user_fun_symbol signature fun_sym =
+let translate_user_fun_symbol fun_sym =
   match fun_sym with
   | Abs.Identifier_fun ident ->
      Dk.var ("T"^(translate_identifier ident))
-  | _ -> raise Error.Not_implemented
+  | Abs.Spec_constant_fun _ -> raise Error.Not_implemented
 
 let translate_sort_par par =
   "S"^(translate_identifier (par, []))
@@ -76,17 +76,17 @@ let rec translate_par_sort signature par_sort =
        (List.map (translate_par_sort signature) par_sorts)
 
 let translate_theory_app fun_sym sorts terms = 
-  match fun_sym, sorts, terms with
-  | Abs.Identifier_fun ("true", []), [], [] -> Dk.l_true
-  | Abs.Identifier_fun ("false", []), [], [] -> Dk.l_false
-  | Abs.Identifier_fun ("not", []), [], [t] -> Dk.l_not t
-  | Abs.Identifier_fun ("=>", []), [], [t1; t2] -> Dk.l_imply t1 t2
-  | Abs.Identifier_fun ("and", []), [], [t1; t2] -> Dk.l_and t1 t2
-  | Abs.Identifier_fun ("or", []), [], [t1; t2] -> Dk.l_or t1 t2
-  | Abs.Identifier_fun ("xor", []), [], [t1; t2] -> Dk.l_xor t1 t2
-  | Abs.Identifier_fun ("=", []), [s], [t1; t2] -> Dk.l_eq s t1 t2
-  | Abs.Identifier_fun ("distinct", []), [s], [t1; t2] -> Dk.l_neq s t1 t2
-  | Abs.Identifier_fun ("ite", []), [s], [b; t1; t2] -> Dk.l_ite s b t1 t2
+  match sorts, terms with
+  | [], [] when (fun_sym = Abs.true_sym) -> Dk.l_true
+  | [], [] when (fun_sym = Abs.false_sym) -> Dk.l_false
+  | [], [t] when (fun_sym = Abs.not_sym) -> Dk.l_not t
+  | [], [t1; t2] when (fun_sym = Abs.imply_sym) -> Dk.l_imply t1 t2
+  | [], [t1; t2] when (fun_sym = Abs.and_sym) -> Dk.l_and t1 t2
+  | [], [t1; t2] when (fun_sym = Abs.or_sym) -> Dk.l_or t1 t2
+  | [], [t1; t2] when (fun_sym = Abs.xor_sym) -> Dk.l_xor t1 t2
+  | [s], [t1; t2] when (fun_sym = Abs.equal_sym) -> Dk.l_eq s t1 t2
+  | [s], [t1; t2] when (fun_sym = Abs.distinct_sym) -> Dk.l_neq s t1 t2
+  | [s], [b; t1; t2] when (fun_sym = Abs.ite_sym) -> Dk.l_ite s b t1 t2
   | _ -> raise Error.Not_implemented
   
 let rec translate_simplified_term signature term =
@@ -95,15 +95,22 @@ let rec translate_simplified_term signature term =
   | Abs.App (fun_sym, _, terms) ->
      begin
        match Signature.find_fun_data fun_sym signature with
-       | Signature.Theory_fun_declaration [pars, par_sorts, _, attribute] ->
+       | Signature.Theory_fun_declaration [pars, par_sorts, _, _] ->
 	  let sorts = 
-	    List.map (fun par -> Get_sort.get_par_sort signature par par_sorts terms) pars in
+	    List.map 
+	      (fun par -> 
+	       Get_sort.get_par_sort 
+		 signature par par_sorts (List.map (Get_sort.get_sort signature) terms)) 
+	      pars in
 	  translate_theory_app 
 	    fun_sym (List.map (translate_sort signature) sorts) 
 	    (List.map (translate_simplified_term signature) terms)
-       | _ ->
-	  Dk.app (translate_user_fun_symbol signature fun_sym) 
-		 (List.map (translate_simplified_term signature) terms) end
+       | Signature.Theory_fun_declaration _ -> 
+	  raise Error.Not_implemented
+       | Signature.User_fun_declaration _ 
+       | Signature.Fun_definition _ ->
+       	  Dk.app (translate_user_fun_symbol fun_sym)
+       		 (List.map (translate_simplified_term signature) terms) end
   | Abs.Let (bindings, term) ->
      let sorted_vars = 
        List.map 
@@ -121,8 +128,8 @@ let rec translate_simplified_term signature term =
      Dk.app
        dk_term 
        (List.map (fun (_, term) -> translate_simplified_term signature term) bindings)
-  | Abs.Forall (sorted_vars, term)
-  | Abs.Exists (sorted_vars, term) ->
+  | Abs.Forall (_, _)
+  | Abs.Exists (_, _) ->
      raise Translate_error 
   | Abs.Attributed (term, _) -> 
      translate_simplified_term signature term
@@ -138,7 +145,7 @@ let translate_prelude file =
     translate_string (Filename.chop_extension (Filename.basename file)) in
   Dk.prelude name
 
-let rec translate_user_sort_declaration signature sort_sym n =
+let translate_user_sort_declaration signature sort_sym n =
   let rec dk_sort i =
     match i with
     | 0 -> Dk.l_sort
@@ -155,7 +162,7 @@ let translate_sort_definition signature sort_sym pars par_sort =
 
 let translate_user_fun_declaration signature fun_sym sorts sort =
   Dk.declaration 
-    (translate_user_fun_symbol signature fun_sym) 
+    (translate_user_fun_symbol fun_sym) 
     (List.fold_left 
        (fun dk_sort sort -> (Dk.arrow (Dk.l_term (translate_sort signature sort)) dk_sort)) 
        (Dk.l_term (translate_sort signature sort)) (List.rev sorts))
@@ -167,8 +174,8 @@ let translate_fun_definition signature fun_sym sorted_vars sort term =
        Dk.arrow (Dk.l_term (translate_sort signature sort)) dk_sort, 
        Signature.add_var var sort signature)
       (Dk.l_term (translate_sort signature sort), signature) (List.rev sorted_vars) in
-  let dk_term = translate_term signature term in
-  Dk.definition (translate_user_fun_symbol signature fun_sym) dk_sort dk_term
+  let dk_term = translate_term new_signature term in
+  Dk.definition (translate_user_fun_symbol fun_sym) dk_sort dk_term
 
 let translate_sort_context signature =
   let lines =

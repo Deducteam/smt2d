@@ -1,6 +1,6 @@
 .PHONY: all clean bench cleanbench
 
-SMTLIBDIR = smtlib2/QF_UF
+SMTLIBDIR = smtlib2/QF_UF/PEQ
 BENCHDIR = bench
 BENCHSMTS = $(shell find $(BENCHDIR) -name "*.smt2")
 BENCHDKS_NEEDED = $(BENCHSMTS:.smt2=.dk)
@@ -13,7 +13,7 @@ all: check logic.dko
 	dkcheck -e $<
 
 check: *.ml *.mli *.mll *.mly
-	ocamlbuild check.native
+	ocamlbuild -cflags -w,+a check.native
 	mv check.native check
 
 clean:

@@ -4,7 +4,7 @@ open Printf
 
 let print_var out var = fprintf out "%s" var
 
-let rec print_const out const =
+let print_const out const =
   match const with
   | Dedukti.Lsort -> output_string out "logic.Sort"
   | Dedukti.Lterm -> output_string out "logic.Term"
@@ -36,7 +36,7 @@ and print_term_p out term =
   match term with
   | Dedukti.Lam _ | Dedukti.App _ | Dedukti.Arrow _ ->
     fprintf out "(%a)" print_term term
-  | _ -> print_term out term
+  | Dedukti.Var _ | Dedukti.Const _ -> print_term out term
 
 and print_terms out terms = 
   match terms with

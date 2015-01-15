@@ -61,7 +61,9 @@ let overload_fun sym data signature =
 	match envdata, data with
 	| Theory_fun_declaration l1, Theory_fun_declaration l2 ->
 	   FunMap.add sym (Theory_fun_declaration (l1@l2)) signature.funs
-	| _, _ -> raise Signature_error
+	| Theory_fun_declaration _, _
+	| User_fun_declaration _ , _
+	| Fun_definition _, _ -> raise Signature_error
       else FunMap.add sym data signature.funs;
     vars = signature.vars;
   }

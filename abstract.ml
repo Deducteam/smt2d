@@ -217,12 +217,6 @@ let command ccommand =
      Get_info (info_flag cinfo_flag)
   | Concrete.Exit -> 
      Exit
-
-(* Sorts are parametric sorts *)
-let rec par_sort_of_sort sort =
-  match sort with
-  | Sort (sort_sym, sorts) ->
-     Par_sort (sort_sym, List.map par_sort_of_sort sorts)
        
 (* *** UTILS *** *)
 
@@ -234,36 +228,36 @@ let rec substitute_par_sort bindings par_sort =
 
 (* *** CONSTANTS *** *)
 
-let bool_id = "Bool", []
-let true_id = "true", []
-let false_id = "false", []
-let not_id = "not", []
-let imply_id = "=>", []
-let and_id = "and", []
-let or_id = "or", []
-let xor_id = "xor", []
-let equal_id = "=", []
-let distinct_id = "distinct", []
-let ite_id = "ite", []
+let bool_sym = sort_symbol ("Bool", [])
+let true_sym = fun_symbol ("true", [])
+let false_sym = fun_symbol ("false", [])
+let not_sym = fun_symbol ("not", [])
+let imply_sym = fun_symbol ("=>", [])
+let and_sym = fun_symbol ("and", [])
+let or_sym = fun_symbol ("or", [])
+let xor_sym = fun_symbol ("xor", [])
+let equal_sym = fun_symbol ("=", [])
+let distinct_sym = fun_symbol ("distinct", [])
+let ite_sym = fun_symbol ("ite", [])
 
 let core_declaration =
   let a_sym = "A" in
-  let bool_sort = parametric_sort [] (Concrete.Sort (bool_id, [])) in
+  let bool_sort = parametric_sort [] (Concrete.Sort (bool_sym, [])) in
   let a_par = sort_parameter a_sym in
   let a_sort =
     parametric_sort [a_par] (Concrete.Sort ((a_sym, []), [])) in
   "Core",
-  [sort_symbol bool_id, 0, []],
-  [ [], fun_symbol true_id, [], bool_sort, []
-  ; [], fun_symbol false_id, [], bool_sort, []
-  ; [], fun_symbol not_id, [bool_sort], bool_sort, []
-  ; [], fun_symbol imply_id, [bool_sort; bool_sort], bool_sort, [":right-assoc", None]
-  ; [], fun_symbol and_id, [bool_sort; bool_sort], bool_sort, [":left-assoc", None]
-  ; [], fun_symbol or_id, [bool_sort; bool_sort], bool_sort, [":left-assoc", None]
-  ; [], fun_symbol xor_id, [bool_sort; bool_sort], bool_sort, [":left-assoc", None]
-  ; [a_par], fun_symbol equal_id, [a_sort; a_sort], bool_sort, [":chainable", None]
-  ; [a_par], fun_symbol distinct_id, [a_sort; a_sort], bool_sort, [":pairwise", None]
-  ; [a_par], fun_symbol ite_id, [bool_sort; a_sort; a_sort], a_sort, []
+  [bool_sym, 0, []],
+  [ [], true_sym, [], bool_sort, []
+  ; [], false_sym, [], bool_sort, []
+  ; [], not_sym, [bool_sort], bool_sort, []
+  ; [], imply_sym, [bool_sort; bool_sort], bool_sort, [":right-assoc", None]
+  ; [], and_sym, [bool_sort; bool_sort], bool_sort, [":left-assoc", None]
+  ; [], or_sym, [bool_sort; bool_sort], bool_sort, [":left-assoc", None]
+  ; [], xor_sym, [bool_sort; bool_sort], bool_sort, [":left-assoc", None]
+  ; [a_par], equal_sym, [a_sort; a_sort], bool_sort, [":chainable", None]
+  ; [a_par], distinct_sym, [a_sort; a_sort], bool_sort, [":pairwise", None]
+  ; [a_par], ite_sym, [bool_sort; a_sort; a_sort], a_sort, []
   ]
 
 let qf_uf_declaration = "QF_UF", ["Core"]

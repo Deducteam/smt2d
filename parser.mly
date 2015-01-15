@@ -1,5 +1,4 @@
-%{
-  open Concrete
+%{  
 %}
 
 %token EOF
@@ -34,18 +33,18 @@ symbol_star:
 ;
 
 spec_constant:
-  | NUMERAL        { Numeral $1 }
-  | DECIMAL        { Decimal $1 }
-  | HEXADECIMAL    { Hexadecimal $1 }
-  | BINARY         { Binary $1 }
-  | STRING         { String $1 }
+  | NUMERAL        { Concrete.Numeral $1 }
+  | DECIMAL        { Concrete.Decimal $1 }
+  | HEXADECIMAL    { Concrete.Hexadecimal $1 }
+  | BINARY         { Concrete.Binary $1 }
+  | STRING         { Concrete.String $1 }
 ;
 
 s_expr:
-  | spec_constant             { Spec_constant_expr $1 }
-  | SYMBOL                    { Symbol_expr $1 }
-  | KEYWORD                   { Keyword_expr $1 }
-  | OPEN s_expr_star CLOSE    { List_expr $2 }
+  | spec_constant             { Concrete.Spec_constant_expr $1 }
+  | SYMBOL                    { Concrete.Symbol_expr $1 }
+  | KEYWORD                   { Concrete.Keyword_expr $1 }
+  | OPEN s_expr_star CLOSE    { Concrete.List_expr $2 }
 ;
 
 s_expr_star:
@@ -59,8 +58,8 @@ identifier:
 ;
 
 sort:
-  | identifier                         { Sort ($1,[]) }
-  | OPEN identifier sort_plus CLOSE    { Sort ($2,$3) }
+  | identifier                         { Concrete.Sort ($1,[]) }
+  | OPEN identifier sort_plus CLOSE    { Concrete.Sort ($2,$3) }
 ;
 
 sort_star:
@@ -74,9 +73,9 @@ sort_plus:
 ;
 
 attribute_value:
-  | spec_constant             { Spec_constant_value $1 }
-  | SYMBOL                    { Symbol_value $1 }
-  | OPEN s_expr_star CLOSE    { S_expr_list_value $2 }
+  | spec_constant             { Concrete.Spec_constant_value $1 }
+  | SYMBOL                    { Concrete.Symbol_value $1 }
+  | OPEN s_expr_star CLOSE    { Concrete.S_expr_list_value $2 }
 ;
 
 attribute:
@@ -118,13 +117,13 @@ sorted_var_plus:
 ;
 
 term:
-  | spec_constant                                        { Spec_constant_term $1 }
-  | qual_identifier                                      { Qual_identifier_term $1 }
-  | OPEN qual_identifier term_plus CLOSE                 { App_term ($2,$3) }
-  | OPEN LET OPEN var_binding_plus CLOSE term CLOSE      { Let_term ($4,$6) }
-  | OPEN FORALL OPEN sorted_var_plus CLOSE term CLOSE    { Forall_term ($4,$6) }
-  | OPEN EXISTS OPEN sorted_var_plus CLOSE term CLOSE    { Exists_term ($4,$6) }
-  | OPEN ATTRIBUTE term attribute_plus CLOSE             { Attributed_term ($3,$4) }
+  | spec_constant                                        { Concrete.Spec_constant_term $1 }
+  | qual_identifier                                      { Concrete.Qual_identifier_term $1 }
+  | OPEN qual_identifier term_plus CLOSE                 { Concrete.App_term ($2,$3) }
+  | OPEN LET OPEN var_binding_plus CLOSE term CLOSE      { Concrete.Let_term ($4,$6) }
+  | OPEN FORALL OPEN sorted_var_plus CLOSE term CLOSE    { Concrete.Forall_term ($4,$6) }
+  | OPEN EXISTS OPEN sorted_var_plus CLOSE term CLOSE    { Concrete.Exists_term ($4,$6) }
+  | OPEN ATTRIBUTE term attribute_plus CLOSE             { Concrete.Attributed_term ($3,$4) }
 ;
 
 term_plus:
@@ -141,25 +140,29 @@ info_flag:
 ;
 
 command:
-  | OPEN SET_LOGIC SYMBOL CLOSE                                        { Set_logic $3 }
-  | OPEN SET_OPTION command_option CLOSE                                       { Set_option $3 }
-  | OPEN SET_INFO attribute CLOSE                                      { Set_info $3 }
-  | OPEN DECLARE_SORT SYMBOL NUMERAL CLOSE                             { Declare_sort ($3,$4) }
-  | OPEN DEFINE_SORT SYMBOL OPEN symbol_star CLOSE sort CLOSE          { Define_sort ($3,$5,$7) }
-  | OPEN DECLARE_FUN SYMBOL OPEN sort_star CLOSE sort CLOSE            { Declare_fun ($3,$5,$7) }
-  | OPEN DEFINE_FUN SYMBOL OPEN sorted_var_star CLOSE sort term CLOSE  { Define_fun ($3,$5,$7,$8) }
-  | OPEN PUSH NUMERAL CLOSE                                            { Push $3 }
-  | OPEN POP NUMERAL CLOSE                                             { Pop $3 }
-  | OPEN ASSERT term CLOSE                                             { Assert $3 }
-  | OPEN CHECK_SAT CLOSE                                               { Check_sat }
-  | OPEN GET_ASSERTIONS CLOSE                                          { Get_assertions }
-  | OPEN GET_PROOF CLOSE                                               { Get_proof }
-  | OPEN GET_UNSAT_CORE CLOSE                                          { Get_unsat_core }
-  | OPEN GET_VALUE OPEN term_plus CLOSE CLOSE                          { Get_value $4 }
-  | OPEN GET_ASSIGNMENT CLOSE                                          { Get_assignment }
-  | OPEN GET_OPTION KEYWORD CLOSE                                      { Get_option $3 }
-  | OPEN GET_INFO info_flag CLOSE                                      { Get_info $3 }
-  | OPEN EXIT CLOSE                                                    { Exit }
+  | OPEN SET_LOGIC SYMBOL CLOSE                                        { Concrete.Set_logic $3 }
+  | OPEN SET_OPTION command_option CLOSE                               { Concrete.Set_option $3 }
+  | OPEN SET_INFO attribute CLOSE                                      { Concrete.Set_info $3 }
+  | OPEN DECLARE_SORT SYMBOL NUMERAL CLOSE                             
+	 { Concrete.Declare_sort ($3,$4) }
+  | OPEN DEFINE_SORT SYMBOL OPEN symbol_star CLOSE sort CLOSE          
+	 { Concrete.Define_sort ($3,$5,$7) }
+  | OPEN DECLARE_FUN SYMBOL OPEN sort_star CLOSE sort CLOSE            
+	 { Concrete.Declare_fun ($3,$5,$7) }
+  | OPEN DEFINE_FUN SYMBOL OPEN sorted_var_star CLOSE sort term CLOSE  
+	 { Concrete.Define_fun ($3,$5,$7,$8) }
+  | OPEN PUSH NUMERAL CLOSE                                            { Concrete.Push $3 }
+  | OPEN POP NUMERAL CLOSE                                             { Concrete.Pop $3 }
+  | OPEN ASSERT term CLOSE                                             { Concrete.Assert $3 }
+  | OPEN CHECK_SAT CLOSE                                               { Concrete.Check_sat }
+  | OPEN GET_ASSERTIONS CLOSE                                          { Concrete.Get_assertions }
+  | OPEN GET_PROOF CLOSE                                               { Concrete.Get_proof }
+  | OPEN GET_UNSAT_CORE CLOSE                                          { Concrete.Get_unsat_core }
+  | OPEN GET_VALUE OPEN term_plus CLOSE CLOSE                          { Concrete.Get_value $4 }
+  | OPEN GET_ASSIGNMENT CLOSE                                          { Concrete.Get_assignment }
+  | OPEN GET_OPTION KEYWORD CLOSE                                      { Concrete.Get_option $3 }
+  | OPEN GET_INFO info_flag CLOSE                                      { Concrete.Get_info $3 }
+  | OPEN EXIT CLOSE                                                    { Concrete.Exit }
   | EOF                                                                { raise End_of_file }
 ;
 

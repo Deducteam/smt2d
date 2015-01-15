@@ -37,7 +37,10 @@ let app t ts =
   match t, ts with
   | _, [] -> t
   | App (us), _ -> App (us @ ts)
-  | _, _ -> App (t :: ts)
+  | Var _ , _ -> App (t :: ts)
+  | Lam _ , _ -> App (t :: ts)
+  | Arrow _ , _ -> App (t :: ts)
+  | Const _ , _ -> App (t :: ts)
 let app2 t1 t2 = app t1 [t2]
 let app3 t1 t2 t3 = app t1 [t2; t3]
 let arrow t1 t2 = Arrow (t1, t2)
@@ -51,7 +54,7 @@ let l_not p = app2 (Const Lnot) p
 let l_imply p q = app3 (Const Limply) p q
 let l_and p q = app3 (Const Land) p q
 let l_or p q = app3 (Const Lor) p q
-let l_xor p q = app3 (Const Lor) p q
+let l_xor p q = app3 (Const Lxor) p q
 let l_eq s t1 t2 = app (Const Leq) [s; t1; t2]
 let l_neq s t1 t2 = app (Const Lneq) [s; t1; t2]
 let l_ite s b t1 t2 = app (Const Lite) [s; b; t1; t2]

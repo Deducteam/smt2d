@@ -22,13 +22,18 @@ let get_logic_name lexbuf =
     | Abstract.Get_option _
     | Abstract.Get_info _ -> get_logic_name_command ()
     | Abstract.Set_logic s -> s
-    | _ -> raise Script_error in
+    | Abstract.Declare_sort _ | Abstract.Define_sort _
+    | Abstract.Declare_fun _ | Abstract.Define_fun _
+    | Abstract.Push _ | Abstract.Pop _ 
+    | Abstract.Assert _ | Abstract.Check_sat | Abstract.Get_value _
+    | Abstract.Get_assertions | Abstract.Get_assignment | Abstract.Get_proof
+    | Abstract.Get_unsat_core | Abstract.Exit -> raise Script_error in
   get_logic_name_command ()
 
 let rec add_in_line_definitions signature def_bindings term =
   match term with
   | Abstract.Var _ -> def_bindings
-  | Abstract.App (fun_sym, opt, terms) ->
+  | Abstract.App (_, _, terms) ->
      List.fold_left (add_in_line_definitions signature) def_bindings terms
   | Abstract.Let (_, term)
   | Abstract.Forall (_, term)
@@ -89,7 +94,10 @@ let get_contexts lexbuf =
 	     (List.rev def_bindings);
 	| Abstract.Set_logic _ ->
 	   raise Script_error
-	| _ -> () end;
+	| Abstract.Set_info _ | Abstract.Set_option _ 
+	| Abstract.Get_assertions | Abstract.Get_assignment | Abstract.Get_proof
+	| Abstract.Get_unsat_core | Abstract.Get_info _ 
+	| Abstract.Get_option _ | Abstract.Exit -> () end;
       get_contexts_command ()
     with End_of_file -> List.rev !contexts in
   get_contexts_command ()

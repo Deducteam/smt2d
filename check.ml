@@ -1,5 +1,3 @@
-open Printf
-
 exception Check_error
 
 let umsg = "Usage: check <files>"
