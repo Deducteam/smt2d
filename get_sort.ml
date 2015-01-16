@@ -14,7 +14,7 @@ let rec get_par_bindings bindings par_sort_assocs =
     | ((par, Some sort) :: bindings) -> (par, sort) :: get_result bindings in
   let rec get_par_bindings_aux bindings par_sort sort =
     match par_sort, sort with
-    | Abs.Par par, _ ->
+    | Abs.Param par, _ ->
        begin try
 	   match List.assoc par bindings with
 	   | None -> (par, Some sort) :: List.remove_assoc par bindings
@@ -92,7 +92,7 @@ let rec get_sort signature term =
 
 let rec get_par_sort signature par par_sorts sorts =
   match par_sorts, sorts with
-  | Abs.Par p :: par_sorts, sort :: sorts -> 
+  | Abs.Param p :: par_sorts, sort :: sorts -> 
      if p = par 
      then sort
      else get_par_sort signature par par_sorts sorts

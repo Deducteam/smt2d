@@ -2,46 +2,48 @@
 
 exception Signature_error
 
+module Abs = Abstract
+
 type sort_data =
   | Theory_sort_declaration of int
   | User_sort_declaration of int
   | Sort_definition of
-      Abstract.sort_parameter list * Abstract.parametric_sort
+      Abs.sort_parameter list * Abs.parametric_sort
 
 type fun_data =
   | Theory_fun_declaration of
-      (Abstract.sort_parameter list *
-	 Abstract.parametric_sort list * Abstract.parametric_sort * Abstract.attribute list) list
-  | User_fun_declaration of Abstract.sort list * Abstract.sort
+      (Abs.sort_parameter list *
+	 Abs.parametric_sort list * Abs.parametric_sort * Abs.attribute list) list
+  | User_fun_declaration of Abs.sort list * Abs.sort
   | Fun_definition of
-      (Abstract.variable * Abstract.sort) list *
-	Abstract.sort * Abstract.term
+      (Abs.variable * Abs.sort) list *
+	Abs.sort * Abs.term
 
 module SortMap =
   Map.Make
     (struct
-      type t = Abstract.sort_symbol
+      type t = Abs.sort_symbol
       let compare = Pervasives.compare
     end)
 
 module FunMap =
   Map.Make
     (struct
-      type t = Abstract.fun_symbol
+      type t = Abs.fun_symbol
       let compare = Pervasives.compare
     end)
 
 module VarMap =
   Map.Make
     (struct
-      type t = Abstract.variable
+      type t = Abs.variable
       let compare = Pervasives.compare
     end)
     
 type signature = {
   sorts: sort_data SortMap.t;
   funs: fun_data FunMap.t;
-  vars: Abstract.sort VarMap.t
+  vars: Abs.sort VarMap.t
 }
 
 (* Internal functions *)
@@ -115,15 +117,22 @@ let logic_signature logic_name =
   let theory_declarations =
     List.map Logic.theory_declaration theory_names in
   List.fold_left 
-    (fun env (_, sort_declarations, par_fun_declarations) -> 
+    (fun env th_decl ->
+     let sort_decls, par_fun_decls = 
+       th_decl.Abs.sort_declarations, th_decl.Abs.par_fun_declarations in
      let newenv = 
        List.fold_left 
-	 (fun env (sym, n, _) ->
-	  add_sort sym (Theory_sort_declaration n) env) 
-	 env sort_declarations in
+	 (fun env sort_decl ->
+	  add_sort sort_decl.Abs.sort_symbol (Theory_sort_declaration sort_decl.Abs.number) env) 
+	 env sort_decls in
      List.fold_left 
-       (fun env (pars, sym, sorts, sort, attributes) -> 
+       (fun env par_fun_decl -> 
         overload_fun
-	  sym (Theory_fun_declaration [pars, sorts, sort, attributes]) env) 
-       newenv par_fun_declarations)
+	  par_fun_decl.Abs.fun_symbol
+	  (Theory_fun_declaration 
+	     [par_fun_decl.Abs.sort_parameters, 
+	      par_fun_decl.Abs.parametric_sorts, 
+	      par_fun_decl.Abs.parametric_sort,
+	      par_fun_decl.Abs.attributes]) env) 
+       newenv par_fun_decls)
     empty theory_declarations

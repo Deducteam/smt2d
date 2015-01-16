@@ -1,3 +1,5 @@
+open Printf
+
 type ident = string
 
 type var = string
@@ -62,3 +64,62 @@ let l_ite s b t1 t2 = app (Const Lite) [s; b; t1; t2]
 let declaration t term = Declaration (t, term)
 let definition t termtype term = Definition (t, termtype, term)
 let prelude name = Prelude (name)
+
+(* Print dedukti terms *)
+
+let print_var out var = fprintf out "%s" var
+
+let print_const out const =
+  match const with
+  | Lsort -> output_string out "logic.Sort"
+  | Lterm -> output_string out "logic.Term"
+  | Lbool -> output_string out "logic.Bool"
+  | Ltrue -> output_string out "logic.true"
+  | Lfalse -> output_string out "logic.false"
+  | Lnot -> output_string out "logic.not"
+  | Limply -> output_string out "logic.imply"
+  | Land -> output_string out "logic.and"
+  | Lor -> output_string out "logic.or"
+  | Lxor -> output_string out "logic.xor"
+  | Leq -> output_string out "logic.equal"
+  | Lneq -> output_string out "logic.distinct"
+  | Lite -> output_string out "logic.ite"
+
+let rec print_term out term =
+  match term with
+  | Var (var) -> print_var out var
+  | Lam (v, t1, t2) ->
+    fprintf out "%a: %a => %a"
+      print_var v print_term_p t1 print_term_p t2
+  | App (ts) -> print_terms out ts
+  | Arrow (t1, t2) ->
+    fprintf out "%a -> %a"
+      print_term_p t1 print_term_p t2
+  | Const c -> print_const out c
+
+and print_term_p out term = 
+  match term with
+  | Lam _ | App _ | Arrow _ ->
+    fprintf out "(%a)" print_term term
+  | Var _ | Const _ -> print_term out term
+
+and print_terms out terms = 
+  match terms with
+  | [] -> ()
+  | [t] -> print_term_p out t
+  | t :: q -> 
+    fprintf out "%a %a"
+      print_term_p t print_terms q
+
+let print_line out line =
+  match line with
+  | Declaration (t, term) -> 
+    fprintf out "%a: %a.\n" 
+      print_term t
+      print_term term
+  | Definition (t, typeterm, term) ->
+    fprintf out "%a: %a:= %a.\n"
+      print_term t
+      print_term typeterm
+      print_term term
+  | Prelude (name) -> fprintf out "#NAME %s.\n" name;

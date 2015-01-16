@@ -1,4 +1,3 @@
-revoir le systèmes d'exceptions
 ajouter des commentaires
 privatiser abstract et ajouter fonctions ?
 séparer Concr->Abs ?
@@ -6,42 +5,3 @@ changer l'écriture des constantes ?
 faire atterrir unfold dans un nouvel ast, typé ou non ?
 attention au shadowing sort_par / sort_sym dans la traduction
 rendre app privé dans dedukti ?
-
-type prop = AssocNone | AssocLeft | AssocRight | Chainable | Pairwise
-
-type sym = {
-  sym_name : string;
-  sym_indices : int list;
-  sym_id : int;
-}
-
-module SymTbl = Weak.Make(struct
-			   type t = sym
-			   let equal s1 s2 =
-			     s1.sym_name = s2.sym_name
-			     && s1.sym_indices = s2.sym_indices
-			   let hash s = Hashtbl.hash s.sym_name
-			 end)
-
-let table = SymTbl.create 2048
-let count = ref 0
-
-(* constructor for symbols, with perfect sharing *)
-let make_sym s indices =
-  let x = { sym_name=s; sym_indices=indices; sym_id=!count; } in
-  let x' = SymTbl.merge table x in
-  if x == x' then incr count; (* x is the new representative *)
-  x'
-
-let sym_of_string s = make_sym s []
-
-let equal_sym s1 s2 = s1 == s2
-let compare_sym s1 s2 = compare s1.sym_id s2.sym_id
-let hash_sym s = s.sym_id 
-
-module SymMap = Map.Make(struct
-			  type t = sym
-			  let compare = compare_sym
-			end)
-
-let and_id = sym_of_string "and"

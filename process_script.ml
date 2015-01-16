@@ -5,7 +5,7 @@ let get_script lexbuf =
   let rec add_command () script =
     try
       let command =
-	Abstract.command (Parser.command Lexer.token lexbuf) in
+	Abstract.tr_command (Parser.command Lexer.token lexbuf) in
       add_command () (command :: script)
     with End_of_file -> script in
   add_command () []
@@ -15,7 +15,7 @@ let get_script lexbuf =
 let get_logic_name lexbuf =
   let rec get_logic_name_command () =
     let command =
-      Abstract.command (Parser.command Lexer.token lexbuf) in
+      Abstract.tr_command (Parser.command Lexer.token lexbuf) in
     match command with
     | Abstract.Set_option _
     | Abstract.Set_info _
@@ -58,7 +58,7 @@ let get_contexts lexbuf =
   let contexts = ref [] in
   let rec get_contexts_command () =
     try
-      let command = Abstract.command (Parser.command Lexer.token lexbuf) in
+      let command = Abstract.tr_command (Parser.command Lexer.token lexbuf) in
       begin 
 	match command with
 	| Abstract.Check_sat -> contexts := (Set_stack.all stack) :: !contexts

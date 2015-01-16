@@ -61,3 +61,9 @@ val l_ite : term -> term -> term -> term -> term
 val declaration : term -> term -> line
 val definition : term -> term -> term -> line
 val prelude : string -> line
+
+(* Print Dedukti terms *)
+val print_var : out_channel -> var -> unit
+val print_term : out_channel -> term -> unit
+val print_terms : out_channel -> term list -> unit
+val print_line : out_channel -> line -> unit
