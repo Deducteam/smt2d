@@ -1,9 +1,11 @@
+(* Dedukti ast and printing functions *)
+
 open Printf
 
+(* Dedukti identifiers *)
 type ident = string
 
-type var = string
-
+(* Dedukti constants *)
 type const =
   | Lsort
   | Lterm
@@ -19,22 +21,25 @@ type const =
   | Lneq
   | Lite
 
-type term = 
-  | Var of var
-  | Lam of var * term * term
+(* Dedukti term *)
+type term =
+  | Var of ident
+  | Lam of ident * term * term
   | App of term list                (* at least two arguments, the first is not an App *)
   | Arrow of term * term
   | Const of const
 
+(* Dedukti line (e.g. definition) *)
 type line =
   | Declaration of term * term
   | Definition of term * term * term
   | Prelude of string
 
-let var var = Var var
-let lam var t term = Lam (var, t, term)
-let lams vars types e = 
-  List.fold_left2 (fun term var t -> lam var t term) e (List.rev vars) (List.rev types)
+(* Building Dedukti terms *)
+let var ident = Var ident
+let lam ident t term = Lam (ident, t, term)
+let lams idents types e = 
+  List.fold_left2 (fun term ident t -> lam ident t term) e (List.rev idents) (List.rev types)
 let app t ts = 
   match t, ts with
   | _, [] -> t
@@ -47,6 +52,7 @@ let app2 t1 t2 = app t1 [t2]
 let app3 t1 t2 t3 = app t1 [t2; t3]
 let arrow t1 t2 = Arrow (t1, t2)
 
+(* Building Dedukti terms in the logic.dk context *)
 let l_sort = Const Lsort
 let l_term t = app2 (Const Lterm) t
 let l_bool = Const Lbool
@@ -66,8 +72,7 @@ let definition t termtype term = Definition (t, termtype, term)
 let prelude name = Prelude (name)
 
 (* Print dedukti terms *)
-
-let print_var out var = fprintf out "%s" var
+let print_ident out ident = fprintf out "%s" ident
 
 let print_const out const =
   match const with
@@ -87,10 +92,10 @@ let print_const out const =
 
 let rec print_term out term =
   match term with
-  | Var (var) -> print_var out var
+  | Var (ident) -> print_ident out ident
   | Lam (v, t1, t2) ->
     fprintf out "%a: %a => %a"
-      print_var v print_term_p t1 print_term_p t2
+      print_ident v print_term_p t1 print_term_p t2
   | App (ts) -> print_terms out ts
   | Arrow (t1, t2) ->
     fprintf out "%a -> %a"

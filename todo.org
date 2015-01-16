@@ -1,7 +1,0 @@
-ajouter des commentaires
-privatiser abstract et ajouter fonctions ?
-séparer Concr->Abs ?
-changer l'écriture des constantes ?
-faire atterrir unfold dans un nouvel ast, typé ou non ?
-attention au shadowing sort_par / sort_sym dans la traduction
-rendre app privé dans dedukti ?

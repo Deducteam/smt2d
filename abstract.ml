@@ -1,6 +1,8 @@
+(* smtlib2 abstract syntax and constants from Core theory *)
+
 exception Logic_error
 
-(* smtlib2 abstract syntax *)
+(* Basic types *)
 
 type number = int
 type sort_symbol = Concrete.identifier

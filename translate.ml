@@ -208,6 +208,8 @@ let tr_assertions signature assertions =
        (Dk.l_term Dk.l_bool)
        (tr_term signature (Expand.expand signature term))) assertions
 
+(* Dedukti lines *)
+
 let print_context out signature assertions file =
   let prelude = tr_prelude file in
   Dk.print_line out prelude;

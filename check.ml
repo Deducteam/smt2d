@@ -11,6 +11,8 @@ let apply_script_processing proc file =
   let lexbuf = Lexing.from_channel chan in
   proc lexbuf
 
+(* get context - ie signature + assertions - from a .smt2 script, translate them and print them 
+ in a .dk file *)
 let check_file file =
   match apply_script_processing Process_script.get_contexts file with
   | [signature, assertions] -> Translate.print_context stdout signature assertions file

@@ -2,11 +2,17 @@
 
 exception Logic_error
 
+(* STRUCTURE and building functions *)
+
+(* Basic types *)
+
 type number = int
 type sort_symbol = Concrete.identifier
 type fun_symbol = private
   | Spec_constant_fun of Concrete.spec_constant
   | Identifier_fun of Concrete.identifier
+val spec_constant_fun: Concrete.spec_constant -> fun_symbol
+val identifier_fun: Concrete.identifier -> fun_symbol
 type attribute_name = Concrete.keyword
 type theory_name = string
 type sort_parameter = Concrete.symbol
@@ -18,10 +24,13 @@ type logic_name = string
 
 type sort = private
   | Sort of sort_symbol * sort list
+val sort: sort_symbol -> sort list -> sort
 
 type parametric_sort = private
   | Param of sort_parameter
   | Par_sort of sort_symbol * parametric_sort list
+val param: sort_parameter -> parametric_sort
+val par_sort: sort_symbol -> parametric_sort list -> parametric_sort
 
 (* Terms *)
 
@@ -45,15 +54,20 @@ val t_attributed: term -> attribute list -> term
 
 type sort_declaration = private
     { sort_symbol: sort_symbol; number: number; attributes: attribute list; }
+val sort_declaration: sort_symbol -> number -> attribute list -> sort_declaration
 
 type par_fun_declaration = private
     { sort_parameters: sort_parameter list; fun_symbol: fun_symbol;
       parametric_sorts: parametric_sort list; parametric_sort: parametric_sort;
       attributes: attribute list; }
+val par_fun_declaration: sort_parameter list -> fun_symbol -> parametric_sort list ->
+			 parametric_sort -> attribute list -> par_fun_declaration
 
 type theory_declaration = private
     { theory_name: theory_name; sort_declarations: sort_declaration list;
       par_fun_declarations: par_fun_declaration list; }
+val theory_declaration: theory_name -> sort_declaration list ->
+			par_fun_declaration list -> theory_declaration
 
 (* Logics *)
 
@@ -87,6 +101,25 @@ type command = private
   | Get_info of info_flag
   | Get_option of attribute_name
   | Exit
+val c_set_logic: logic_name -> command
+val c_set_option: command_option -> command
+val c_set_info: attribute -> command
+val c_declare_sort: sort_symbol -> number -> command
+val c_define_sort: sort_symbol -> sort_parameter list -> parametric_sort -> command
+val c_declare_fun: fun_symbol -> sort list -> sort -> command
+val c_define_fun: fun_symbol -> (variable * sort) list -> sort -> term -> command
+val c_push: number -> command
+val c_pop: number -> command
+val c_assert: term -> command
+val c_check_sat: command
+val c_get_assertions: command
+val c_get_value: term list -> command
+val c_get_assignment: command
+val c_get_proof: command
+val c_get_unsat_core: command
+val c_get_info: info_flag -> command
+val c_get_option: attribute_name -> command
+val c_exit: command
 
 type script = command list
       
@@ -120,6 +153,7 @@ val core_declaration: theory_declaration
 val qf_uf_declaration: logic_declaration  
 
 (* Get theories and logics declarations from their names *)
+
 val get_theory_declaration:
   theory_name -> theory_declaration
 val get_logic_declaration:
