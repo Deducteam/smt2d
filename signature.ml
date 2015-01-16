@@ -113,9 +113,9 @@ let fold_vars f signature b =
   VarMap.fold f signature.vars b
 
 let logic_signature logic_name =
-  let _, theory_names = Logic.logic_declaration logic_name in
+  let _, theory_names = Abs.get_logic_declaration logic_name in
   let theory_declarations =
-    List.map Logic.theory_declaration theory_names in
+    List.map Abs.get_theory_declaration theory_names in
   List.fold_left 
     (fun env th_decl ->
      let sort_decls, par_fun_decls = 

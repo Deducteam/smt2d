@@ -1,5 +1,7 @@
 (* smtlib2 abstract syntax *)
 
+exception Logic_error
+
 type number = int
 type sort_symbol = Concrete.identifier
 type fun_symbol = private
@@ -116,3 +118,9 @@ val ite_sym: fun_symbol
 
 val core_declaration: theory_declaration
 val qf_uf_declaration: logic_declaration  
+
+(* Get theories and logics declarations from their names *)
+val get_theory_declaration:
+  theory_name -> theory_declaration
+val get_logic_declaration:
+  logic_name -> logic_declaration

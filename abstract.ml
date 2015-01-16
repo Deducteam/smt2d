@@ -1,3 +1,5 @@
+exception Logic_error
+
 (* smtlib2 abstract syntax *)
 
 type number = int
@@ -308,3 +310,15 @@ let core_declaration =
     theory_declaration "Core" sort_decls par_fun_decls 
 
 let qf_uf_declaration = "QF_UF", ["Core"]
+
+(* Get theories and logics declarations from their names *)
+
+let get_theory_declaration theory_name =
+  match theory_name with
+  | "Core" -> core_declaration
+  | _ -> raise Logic_error
+
+let get_logic_declaration logic_name = 
+  match logic_name with
+  | "QF_UF" -> qf_uf_declaration 
+  | _ -> raise Logic_error
