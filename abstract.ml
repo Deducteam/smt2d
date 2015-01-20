@@ -141,7 +141,9 @@ module VarSet =
     end)
 
 type varset = VarSet.t
-    
+
+let empty_vars = VarSet.empty
+		
 let add_vars vars var_set =
   List.fold_left
     (fun var_set var -> VarSet.add var var_set) var_set vars

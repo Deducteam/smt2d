@@ -126,7 +126,9 @@ type script = command list
 (* *** CONCRETE TO ABSTRACT *** *)
 
 type varset
-		      
+
+val empty_vars: varset
+       
 val tr_term: varset -> Concrete.term -> term
 		      
 val tr_command: Concrete.command -> command
