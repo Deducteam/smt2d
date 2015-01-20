@@ -18,8 +18,8 @@ check:
 
 install:
 	ocamlfind remove smt2d
-	ocamlfind install smt2d META _build/smt2d.cma _build/smt2d.cmxa \
-		_build/smt2d.cmi
+	ocamlfind install smt2d META _build/smt2d.a _build/smt2d.cma \
+		_build/smt2d.cmxa _build/smt2d.cmi
 
 %.dko: %.dk
 	dkcheck -e $<
