@@ -6,8 +6,6 @@ val tr_string: string -> Dedukti.ident
 
 val tr_term: Signature.signature -> Expand.term -> Dedukti.term
 
-val tr_prelude: string -> Dedukti.line
-
 val tr_sort_context: Signature.signature -> Dedukti.line list
 
 val tr_fun_context: Signature.signature -> Dedukti.line list

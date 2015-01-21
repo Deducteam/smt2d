@@ -139,11 +139,6 @@ let tr_term signature term =
 
 (* Dedukti lines *)
 
-let tr_prelude file = 
-  let name =
-    tr_string (Filename.chop_extension (Filename.basename file)) in
-  Dk.prelude name
-
 let tr_user_sort_declaration signature sort_sym n =
   let rec dk_sort i =
     match i with

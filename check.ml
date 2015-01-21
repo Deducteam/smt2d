@@ -14,7 +14,8 @@ let apply_script_processing proc file =
 (* get context - ie signature + assertions - from a .smt2 script, translate them and print them 
  in a .dk file *)
 let check_file file =
-  let prelude = Translate.tr_prelude file in
+  let modname = Translate.tr_string (Filename.chop_extension (Filename.basename file)) in
+  let prelude = Dedukti.prelude modname in
   match apply_script_processing Process_script.get_contexts file with
   | [signature, assertions] ->
      let sort_context = Translate.tr_sort_context signature in
