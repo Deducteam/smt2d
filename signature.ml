@@ -47,12 +47,6 @@ type signature = {
 }
 
 (* Internal functions *)
-		   
-let empty =
-  { sorts = SortMap.empty;
-    funs = FunMap.empty;
-    vars = VarMap.empty
-  }
 
 let overload_fun sym data signature =
   { sorts = signature.sorts;
@@ -111,6 +105,12 @@ let fold_funs f signature b =
   FunMap.fold f signature.funs b
 let fold_vars f signature b =
   VarMap.fold f signature.vars b
+		   
+let empty =
+  { sorts = SortMap.empty;
+    funs = FunMap.empty;
+    vars = VarMap.empty
+  }
 
 let logic_signature logic_name =
   let _, theory_names = Abs.get_logic_declaration logic_name in

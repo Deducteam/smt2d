@@ -42,5 +42,6 @@ val fold_funs:
 val fold_vars:
   (Abstract.variable -> Abstract.sort -> 'a -> 'a) -> signature -> 'a -> 'a
 
+val empty: signature
 
 val logic_signature: Abstract.logic_name -> signature
