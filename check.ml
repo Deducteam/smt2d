@@ -14,9 +14,9 @@ let apply_script_processing proc file =
 (* get context - ie signature + assertions - from a .smt2 script, translate them and print them 
  in a .dk file *)
 let check_file file =
+  let prelude = Translate.tr_prelude file in
   match apply_script_processing Process_script.get_contexts file with
-  | [signature, assertions] -> 
-     let prelude = Translate.tr_prelude file in
+  | [signature, assertions] ->
      let sort_context = Translate.tr_sort_context signature in
      let fun_context = Translate.tr_fun_context signature in
      let propositions = Translate.tr_assertions signature assertions in
