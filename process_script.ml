@@ -101,3 +101,8 @@ let get_contexts lexbuf =
       get_contexts_command ()
     with End_of_file -> List.rev !contexts in
   get_contexts_command ()
+
+let get_unique_context lexbuf =
+  match get_contexts lexbuf with
+  | [signature, assertions] -> signature, assertions
+  | _ -> raise Script_error
