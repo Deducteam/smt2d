@@ -7,7 +7,7 @@ BENCHDKS_NEEDED = $(BENCHSMTS:.smt2=.dk)
 BENCHDKS = $(shell find $(BENCHDIR) -name "*.dk")
 BENCHDKTS_NEEDED = $(BENCHDKS:.dk=.dkt)
 
-all: lib check logic.dko
+all: lib logic.dko
 
 lib:
 	ocamlbuild -cflags -w,+a,-for-pack,Smt2d smt2d.cma smt2d.cmxa
