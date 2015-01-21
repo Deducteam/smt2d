@@ -12,7 +12,7 @@ all: lib logic.dko
 lib:
 	ocamlbuild -cflags -w,+a,-for-pack,Smt2d smt2d.cma smt2d.cmxa
 
-check:
+check: logic.dko
 	ocamlbuild -cflags -w,+a check.native
 	mv check.native check
 
@@ -34,7 +34,7 @@ clean:
 	rm -f check logic.dko *~ *\#
 	ocamlbuild -clean
 
-bench: all $(BENCHDIR)/.dummy $(BENCHDKS_NEEDED) $(BENCHDKTS_NEEDED)
+bench: check $(BENCHDIR)/.dummy $(BENCHDKS_NEEDED) $(BENCHDKTS_NEEDED)
 
 $(BENCHDIR)/.dummy:
 	[ -e $(BENCHIR) ] || mkdir $(BENCHDIR)

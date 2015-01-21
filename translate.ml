@@ -207,15 +207,3 @@ let tr_assertions signature assertions =
        (Dk.var ("H_"^(string_of_int (i+1)))) 
        (Dk.l_term Dk.l_bool)
        (tr_term signature (Expand.expand signature term))) assertions
-
-(* Dedukti lines *)
-
-let print_context out signature assertions file =
-  let prelude = tr_prelude file in
-  Dk.print_line out prelude;
-  let sort_context = tr_sort_context signature in
-  List.iter (Dk.print_line out) sort_context;
-  let fun_context = tr_fun_context signature in
-  List.iter (Dk.print_line out) fun_context;
-  let propositions = tr_assertions signature assertions in
-  List.iter (Dk.print_line out) propositions

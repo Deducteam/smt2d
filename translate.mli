@@ -13,5 +13,3 @@ val tr_sort_context: Signature.signature -> Dedukti.line list
 val tr_fun_context: Signature.signature -> Dedukti.line list
 
 val tr_assertions: Signature.signature -> Abstract.term list ->  Dedukti.line list
-
-val print_context: out_channel -> Signature.signature -> Abstract.term list -> string -> unit
