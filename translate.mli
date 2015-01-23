@@ -10,4 +10,5 @@ val tr_sort_context: Signature.signature -> Dedukti.line list
 
 val tr_fun_context: Signature.signature -> Dedukti.line list
 
-val tr_assertions: Signature.signature -> Abstract.term list -> (Dedukti.line * Dedukti.term) list
+val tr_assertion_bindings: Signature.signature -> (Abstract.term * Dedukti.term) list -> 
+			   Dedukti.line list

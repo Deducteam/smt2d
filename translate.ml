@@ -195,10 +195,8 @@ let tr_fun_context signature =
 	  tr_fun_definition signature fun_sym sorted_vars sort term :: lines) signature [] in
   List.rev lines
 
-let tr_assertions signature assertions =
-  List.mapi
-    (fun i term -> 
-     let var = (Dk.var ("I_"^(string_of_int (i+1)))) in
-     Dk.definition
-       var (Dk.l_term Dk.l_bool)
-       (tr_term signature (Expand.expand signature term)), var) assertions
+let tr_assertion_bindings signature assertion_bindings =
+  List.map
+    (fun (term, var) -> 
+     Dk.definition var (Dk.l_term Dk.l_bool)
+       (tr_term signature (Expand.expand signature term))) assertion_bindings
