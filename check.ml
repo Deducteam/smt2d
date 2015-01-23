@@ -19,11 +19,11 @@ let check_file file =
   let signature, assertions = apply_script_processing Process_script.get_unique_context file in
   let sort_context = Translate.tr_sort_context signature in
   let fun_context = Translate.tr_fun_context signature in
-  let propositions = Translate.tr_assertions signature assertions in
+  let inputs, _ = List.split (Translate.tr_assertions signature assertions) in
   Dedukti.print_line stdout prelude;
   List.iter (Dedukti.print_line stdout) sort_context;
   List.iter (Dedukti.print_line stdout) fun_context;
-  List.iter (Dedukti.print_line stdout) propositions
+  List.iter (Dedukti.print_line stdout) inputs
 
 let () =
   Arg.parse argspec (fun f -> files := f :: !files) umsg;

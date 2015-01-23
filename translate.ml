@@ -198,7 +198,7 @@ let tr_fun_context signature =
 let tr_assertions signature assertions =
   List.mapi
     (fun i term -> 
-     Dk.definition 
-       (Dk.var ("H_"^(string_of_int (i+1)))) 
-       (Dk.l_term Dk.l_bool)
-       (tr_term signature (Expand.expand signature term))) assertions
+     let var = (Dk.var ("I_"^(string_of_int (i+1)))) in
+     Dk.definition
+       var (Dk.l_term Dk.l_bool)
+       (tr_term signature (Expand.expand signature term)), var) assertions
