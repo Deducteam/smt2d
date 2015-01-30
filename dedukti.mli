@@ -8,6 +8,7 @@ type const = private
   | LSort
   | LTerm
   | LBool
+  | LProof
   | LTrue
   | LFalse
   | LNot
@@ -46,6 +47,7 @@ val arrow : term -> term -> term
 val l_sort : term
 val l_term : term -> term
 val l_bool : term
+val l_proof : term -> term
 val l_true : term
 val l_false : term
 val l_not : term -> term

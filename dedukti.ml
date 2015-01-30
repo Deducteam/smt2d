@@ -10,6 +10,7 @@ type const =
   | LSort
   | LTerm
   | LBool
+  | LProof
   | LTrue
   | LFalse
   | LNot
@@ -56,6 +57,7 @@ let arrow t1 t2 = Arrow (t1, t2)
 let l_sort = Const LSort
 let l_term t = app2 (Const LTerm) t
 let l_bool = Const LBool
+let l_proof t = app2 (Const LProof) t
 let l_true = Const LTrue
 let l_false = Const LFalse
 let l_not p = app2 (Const LNot) p
@@ -79,6 +81,7 @@ let print_const out const =
   | LSort -> output_string out "logic.Sort"
   | LTerm -> output_string out "logic.Term"
   | LBool -> output_string out "logic.Bool"
+  | LProof -> output_string out "logic.Proof"
   | LTrue -> output_string out "logic.true"
   | LFalse -> output_string out "logic.false"
   | LNot -> output_string out "logic.not"

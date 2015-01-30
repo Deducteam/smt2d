@@ -2,6 +2,7 @@
 Sort: Type.
 Term: Sort -> Type.
 Bool: Sort.
+Proof: Term Bool -> Type.
 true: Term Bool.
 false: Term Bool.
 not: Term Bool -> Term Bool.
