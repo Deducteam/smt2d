@@ -1,6 +1,6 @@
 (* smtlib2 abstract syntax *)
 
-exception Logic_error
+exception Abstract_error
 
 (* STRUCTURE and building functions *)
 
@@ -24,21 +24,38 @@ type logic_name = string
 
 type sort = private
   | Sort of sort_symbol * sort list
+  | Bool
 val sort: sort_symbol -> sort list -> sort
+val bool: sort
 
 type parametric_sort = private
   | Param of sort_parameter
   | Par_sort of sort_symbol * parametric_sort list
+  | Par_bool
 val param: sort_parameter -> parametric_sort
 val par_sort: sort_symbol -> parametric_sort list -> parametric_sort
+val par_bool: parametric_sort
 
 (* Terms *)
 
 type attribute = attribute_name * attribute_value option
 
-type term = private
+type core_app = private
+  | True
+  | False
+  | Not of term
+  | Imply of term * term
+  | And of term * term
+  | Or of term * term
+  | Xor of term * term
+  | Equal of term * term
+  | Distinct of term * term
+  | Ite of term * term * term
+
+and term = private
   | Var of variable
   | App of fun_symbol * sort option * term list
+  | Core of core_app
   | Let of (variable * term) list * term
   | Forall of (variable * sort) list * term
   | Exists of (variable * sort) list * term
@@ -49,8 +66,18 @@ val t_let: (variable * term) list -> term -> term
 val t_forall: (variable * sort) list -> term -> term
 val t_exists: (variable * sort) list -> term -> term
 val t_attributed: term -> attribute list -> term
+val t_true: term
+val t_false: term
+val t_not: term -> term
+val t_imply: term -> term -> term
+val t_and: term -> term -> term
+val t_or: term -> term -> term
+val t_xor: term -> term -> term
+val t_equal: term -> term -> term
+val t_distinct: term -> term -> term
+val t_ite: term -> term -> term -> term
 
-(* Theories *)
+(* theories *)
 
 type sort_declaration = private
     { sort_symbol: sort_symbol; number: number; attributes: attribute list; }

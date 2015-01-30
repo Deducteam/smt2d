@@ -58,8 +58,8 @@ identifier:
 ;
 
 sort:
-  | identifier                         { Concrete.Sort ($1,[]) }
-  | OPEN identifier sort_plus CLOSE    { Concrete.Sort ($2,$3) }
+  | identifier                         { Concrete.parse_sort $1 [] }
+  | OPEN identifier sort_plus CLOSE    { Concrete.parse_sort $2 $3 }
 ;
 
 sort_star:
@@ -118,8 +118,8 @@ sorted_var_plus:
 
 term:
   | spec_constant                                        { Concrete.Spec_constant_term $1 }
-  | qual_identifier                                      { Concrete.Qual_identifier_term $1 }
-  | OPEN qual_identifier term_plus CLOSE                 { Concrete.App_term ($2,$3) }
+  | qual_identifier                                      { Concrete.parse_fun $1 [] }
+  | OPEN qual_identifier term_plus CLOSE                 { Concrete.parse_fun $2 $3 }
   | OPEN LET OPEN var_binding_plus CLOSE term CLOSE      { Concrete.Let_term ($4,$6) }
   | OPEN FORALL OPEN sorted_var_plus CLOSE term CLOSE    { Concrete.Forall_term ($4,$6) }
   | OPEN EXISTS OPEN sorted_var_plus CLOSE term CLOSE    { Concrete.Exists_term ($4,$6) }

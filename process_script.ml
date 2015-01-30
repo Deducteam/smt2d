@@ -30,11 +30,29 @@ let get_logic_name lexbuf =
     | Abstract.Get_unsat_core | Abstract.Exit -> raise Script_error in
   get_logic_name_command ()
 
-let rec add_in_line_definitions signature def_bindings term =
+let rec add_in_line_definitions_core signature def_bindings core =
+  match core with
+  | Abstract.True
+  | Abstract.False -> []
+  | Abstract.Not t -> 
+     add_in_line_definitions signature def_bindings t
+  | Abstract.Imply (t1, t2)
+  | Abstract.And (t1, t2)
+  | Abstract.Or (t1, t2)
+  | Abstract.Xor (t1, t2)
+  | Abstract.Equal (t1, t2)
+  | Abstract.Distinct (t1, t2) ->
+     List.fold_left (add_in_line_definitions signature) def_bindings [t1; t2]	  
+  | Abstract.Ite (t1, t2, t3) ->
+     List.fold_left (add_in_line_definitions signature) def_bindings [t1; t2; t3]
+
+and add_in_line_definitions signature def_bindings term =
   match term with
   | Abstract.Var _ -> def_bindings
   | Abstract.App (_, _, terms) ->
      List.fold_left (add_in_line_definitions signature) def_bindings terms
+  | Abstract.Core core ->
+     add_in_line_definitions_core signature def_bindings core
   | Abstract.Let (_, term)
   | Abstract.Forall (_, term)
   | Abstract.Exists (_, term) ->
@@ -50,11 +68,10 @@ let rec add_in_line_definitions signature def_bindings term =
    - returns the list of (env, assertion lists) couples 
      corresponding to each check-sat command of the script *)
 let get_contexts lexbuf =
-  let logic_signature =
-    Signature.logic_signature (get_logic_name lexbuf) in
+  let _ = get_logic_name lexbuf in
   (* - contexts: (signature, assertion list) list corresponding to previous check-sat commands
      - stack: current assertion-set stack - (sort bindings, fun bindings, assertions) list *)
-  let stack = Set_stack.create logic_signature in
+  let stack = Set_stack.create Signature.empty in
   let contexts = ref [] in
   let rec get_contexts_command () =
     try
@@ -65,12 +82,12 @@ let get_contexts lexbuf =
 	| Abstract.Push n -> Set_stack.push stack n
 	| Abstract.Pop n -> Set_stack.pop stack n
 	| Abstract.Declare_sort (sort_sym, n) ->
-	   Set_stack.add_sort stack sort_sym (Signature.User_sort_declaration n)
+	   Set_stack.add_sort stack sort_sym (Signature.Sort_declaration n)
 	| Abstract.Define_sort (sort_sym, pars, par_sort) ->
 	   Set_stack.add_sort stack sort_sym (Signature.Sort_definition (pars, par_sort))
 	| Abstract.Declare_fun (fun_sym, sorts, sort) ->
 	   Set_stack.add_fun 
-	     stack fun_sym (Signature.User_fun_declaration (sorts, sort))
+	     stack fun_sym (Signature.Fun_declaration (sorts, sort))
 	| Abstract.Define_fun (fun_sym, sorted_vars, sort, term) ->
 	   let signature, _ = Set_stack.all stack in
 	   let def_bindings = add_in_line_definitions signature [] term in

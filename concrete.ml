@@ -30,7 +30,11 @@ type identifier = symbol * numeral list
 
 (* Sorts *)
 
-type sort = Sort of identifier * sort list
+type core_sort = CBool
+
+type sort = 
+  | Sort of identifier * sort list
+  | Core_sort of core_sort * sort list
 
 (* Attributes *)
 
@@ -49,10 +53,22 @@ type sorted_var = symbol * sort
 
 type var_binding = symbol * term
 
+and core_fun =
+  | CTrue
+  | CFalse
+  | CNot
+  | CImply
+  | CAnd
+  | COr
+  | CXor
+  | CEqual
+  | CDistinct
+  | CIte
+
 and term =
   | Spec_constant_term of spec_constant
-  | Qual_identifier_term of qual_identifier
-  | App_term of qual_identifier * term list (* non empty args *)
+  | App_term of qual_identifier * term list (* can be empty *)
+  | Core_app_term of core_fun * term list
   | Let_term of var_binding list * term
   | Forall_term of sorted_var list * term
   | Exists_term of sorted_var list * term
@@ -92,3 +108,25 @@ type command =
   | Exit
 
 type script = command list
+
+(* Parsing functions *)
+
+let parse_sort ((sym, nums) as id) sorts =
+  match sym, nums with
+  | "Bool", [] -> Core_sort (CBool, sorts)
+  | _, _ -> Sort (id, sorts)
+
+let parse_fun (((sym, nums), _) as qual_id) terms =
+  match sym, nums with
+  | "true", [] -> Core_app_term (CTrue, terms)
+  | "false", [] -> Core_app_term (CFalse, terms)
+  | "not", [] -> Core_app_term (CNot, terms)
+  | "=>", [] -> Core_app_term (CImply, terms)
+  | "and", [] -> Core_app_term (CAnd, terms)
+  | "or", [] -> Core_app_term (COr, terms)
+  | "xor", [] -> Core_app_term (CXor, terms)
+  | "=", [] -> Core_app_term (CEqual, terms)
+  | "distinct", [] -> Core_app_term (CDistinct, terms)
+  | "ite", [] -> Core_app_term (CIte, terms)
+  | _, _ -> App_term (qual_id, terms)
+

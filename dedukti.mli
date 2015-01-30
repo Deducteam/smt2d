@@ -5,19 +5,19 @@ type ident = string
 
 (* Dedukti constants *)
 type const = private
-  | Lsort
-  | Lterm
-  | Lbool
-  | Ltrue
-  | Lfalse
-  | Lnot
-  | Limply
-  | Land
-  | Lor
-  | Lxor
-  | Leq
-  | Lneq
-  | Lite
+  | LSort
+  | LTerm
+  | LBool
+  | LTrue
+  | LFalse
+  | LNot
+  | LImply
+  | LAnd
+  | LOr
+  | LXor
+  | LEqual
+  | LDistinct
+  | LIte
 
 (* Dedukti term *)
 type term = private
@@ -53,8 +53,8 @@ val l_imply : term -> term -> term
 val l_and : term -> term -> term
 val l_or : term -> term -> term
 val l_xor : term -> term -> term
-val l_eq : term -> term -> term -> term
-val l_neq : term -> term -> term -> term
+val l_equal : term -> term -> term -> term
+val l_distinct : term -> term -> term -> term
 val l_ite : term -> term -> term -> term -> term
 
 (* Building Dedukti lines *)

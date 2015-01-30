@@ -7,19 +7,19 @@ type ident = string
 
 (* Dedukti constants *)
 type const =
-  | Lsort
-  | Lterm
-  | Lbool
-  | Ltrue
-  | Lfalse
-  | Lnot
-  | Limply
-  | Land
-  | Lor
-  | Lxor
-  | Leq
-  | Lneq
-  | Lite
+  | LSort
+  | LTerm
+  | LBool
+  | LTrue
+  | LFalse
+  | LNot
+  | LImply
+  | LAnd
+  | LOr
+  | LXor
+  | LEqual
+  | LDistinct
+  | LIte
 
 (* Dedukti term *)
 type term =
@@ -53,19 +53,19 @@ let app3 t1 t2 t3 = app t1 [t2; t3]
 let arrow t1 t2 = Arrow (t1, t2)
 
 (* Building Dedukti terms in the logic.dk context *)
-let l_sort = Const Lsort
-let l_term t = app2 (Const Lterm) t
-let l_bool = Const Lbool
-let l_true = Const Ltrue
-let l_false = Const Lfalse
-let l_not p = app2 (Const Lnot) p
-let l_imply p q = app3 (Const Limply) p q
-let l_and p q = app3 (Const Land) p q
-let l_or p q = app3 (Const Lor) p q
-let l_xor p q = app3 (Const Lxor) p q
-let l_eq s t1 t2 = app (Const Leq) [s; t1; t2]
-let l_neq s t1 t2 = app (Const Lneq) [s; t1; t2]
-let l_ite s b t1 t2 = app (Const Lite) [s; b; t1; t2]
+let l_sort = Const LSort
+let l_term t = app2 (Const LTerm) t
+let l_bool = Const LBool
+let l_true = Const LTrue
+let l_false = Const LFalse
+let l_not p = app2 (Const LNot) p
+let l_imply p q = app3 (Const LImply) p q
+let l_and p q = app3 (Const LAnd) p q
+let l_or p q = app3 (Const LOr) p q
+let l_xor p q = app3 (Const LXor) p q
+let l_equal s t1 t2 = app (Const LEqual) [s; t1; t2]
+let l_distinct s t1 t2 = app (Const LDistinct) [s; t1; t2]
+let l_ite s b t1 t2 = app (Const LIte) [s; b; t1; t2]
 
 let declaration t term = Declaration (t, term)
 let definition t termtype term = Definition (t, termtype, term)
@@ -76,19 +76,19 @@ let print_ident out ident = fprintf out "%s" ident
 
 let print_const out const =
   match const with
-  | Lsort -> output_string out "logic.Sort"
-  | Lterm -> output_string out "logic.Term"
-  | Lbool -> output_string out "logic.Bool"
-  | Ltrue -> output_string out "logic.true"
-  | Lfalse -> output_string out "logic.false"
-  | Lnot -> output_string out "logic.not"
-  | Limply -> output_string out "logic.imply"
-  | Land -> output_string out "logic.and"
-  | Lor -> output_string out "logic.or"
-  | Lxor -> output_string out "logic.xor"
-  | Leq -> output_string out "logic.equal"
-  | Lneq -> output_string out "logic.distinct"
-  | Lite -> output_string out "logic.ite"
+  | LSort -> output_string out "logic.Sort"
+  | LTerm -> output_string out "logic.Term"
+  | LBool -> output_string out "logic.Bool"
+  | LTrue -> output_string out "logic.true"
+  | LFalse -> output_string out "logic.false"
+  | LNot -> output_string out "logic.not"
+  | LImply -> output_string out "logic.imply"
+  | LAnd -> output_string out "logic.and"
+  | LOr -> output_string out "logic.or"
+  | LXor -> output_string out "logic.xor"
+  | LEqual -> output_string out "logic.equal"
+  | LDistinct -> output_string out "logic.distinct"
+  | LIte -> output_string out "logic.ite"
 
 let rec print_term out term =
   match term with

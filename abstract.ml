@@ -1,6 +1,6 @@
 (* smtlib2 abstract syntax and constants from Core theory *)
 
-exception Logic_error
+exception Abstract_error
 
 (* Basic types *)
 
@@ -22,24 +22,41 @@ type logic_name = string
 
 type sort = 
   | Sort of sort_symbol * sort list
+  | Bool
 let sort sort_sym sorts =
   Sort (sort_sym, sorts)
+let bool = Bool
 
 type parametric_sort =
   | Param of sort_parameter
   | Par_sort of sort_symbol * parametric_sort list
+  | Par_bool
 let param sort_par =
   Param sort_par
 let par_sort sort_sym par_sorts =
   Par_sort (sort_sym, par_sorts)
+let par_bool = Par_bool
 
 (* Terms *)
 
 type attribute = attribute_name * attribute_value option
 
-type term =
+type core_app =
+  | True
+  | False
+  | Not of term
+  | Imply of term * term
+  | And of term * term
+  | Or of term * term
+  | Xor of term * term
+  | Equal of term * term
+  | Distinct of term * term
+  | Ite of term * term * term
+
+and term =
   | Var of variable
   | App of fun_symbol * sort option * term list
+  | Core of core_app
   | Let of (variable * term) list * term
   | Forall of (variable * sort) list * term
   | Exists of (variable * sort) list * term
@@ -50,6 +67,16 @@ let t_let sorted_vars term = Let (sorted_vars, term)
 let t_forall bindings term = Forall (bindings, term)
 let t_exists bindings term = Exists (bindings, term)
 let t_attributed term attrs = Attributed (term, attrs)
+let t_true = Core True
+let t_false = Core False
+let t_not t = Core (Not t)
+let t_imply t1 t2 = Core (Imply (t1, t2))
+let t_and t1 t2 = Core (And (t1, t2))
+let t_or t1 t2 = Core (Or (t1, t2))
+let t_xor t1 t2 = Core (Xor (t1, t2))
+let t_equal t1 t2 = Core (Equal (t1, t2))
+let t_distinct t1 t2 = Core (Distinct (t1, t2))
+let t_ite t1 t2 t3 = Core (Ite (t1, t2, t3))
 
 (* Theories *)
 
@@ -131,6 +158,43 @@ type script = command list
 
 (* *** CONCRETE TO ABSTRACT *** *)
 
+(* Functions removing chainable, left-assoc, right-assoc, and pairwise syntactic sugar *)
+						   
+let rec mk_left_assoc binop ts =
+  match ts with
+  | [] -> assert false 
+  | [t] -> t
+  | t1 :: t2 :: ts -> 
+     let t = binop t1 t2 in
+     mk_left_assoc binop (t :: ts)
+
+let rec mk_right_assoc binop ts =
+  match ts with
+  | [] -> assert false
+  | [t] -> t
+  | t1 :: t2 :: ts -> 
+     let t = mk_right_assoc binop (t2 :: ts) in
+     binop t1 t
+
+let mk_chainable binop ts =
+  let rec mk_chain ts =
+    match ts with
+    | [] -> assert false
+    | [_] -> [] 
+    | t1 :: t2 :: ts -> binop t1 t2 :: mk_chain (t2 :: ts) in
+  mk_left_assoc t_and (mk_chain ts)
+
+let rec mk_pairwise binop ts = 
+  let mk_pairs ts =
+    match ts with 
+    | [] -> assert false
+    | t :: ts -> 
+       List.map (binop t) ts @ [mk_pairwise binop ts] in
+  match ts with
+  | [] | [_] -> assert false
+  | [t1; t2] -> binop t1 t2
+  | _ -> mk_left_assoc t_and (mk_pairs ts)
+
 (* Variable Environment *)
 		      
 module VarSet =
@@ -164,6 +228,10 @@ let rec tr_sort csort =
   match csort with
   | Concrete.Sort (id, csorts) ->
      sort (tr_sort_symbol id) (List.map tr_sort csorts)
+  | Concrete.Core_sort (Concrete.CBool, csorts) ->
+     match csorts with
+     | [] -> bool
+     | _ -> raise Abstract_error
 
 let rec tr_parametric_sort pars csort =
   match csort with
@@ -174,6 +242,10 @@ let rec tr_parametric_sort pars csort =
      else par_sort (tr_sort_symbol (sym, [])) []
   | Concrete.Sort (id, csorts) ->
      par_sort (tr_sort_symbol id) (List.map (tr_parametric_sort pars) csorts)
+  | Concrete.Core_sort (Concrete.CBool, csorts) ->
+     match csorts with
+     | [] -> par_bool
+     | _ -> raise Abstract_error
 
 (* Terms *)
 	      
@@ -184,21 +256,37 @@ let tr_sorted_var (sym, csort) = tr_variable sym, tr_sort csort
 let rec tr_var_binding var_set (sym, cterm) =
   tr_variable sym, tr_term var_set cterm
 
+and tr_core_app var_set const cterms =
+  match const, List.map (tr_term var_set) cterms with
+  | Concrete.CTrue, [] -> t_true
+  | Concrete.CTrue, _ -> raise Abstract_error
+  | Concrete.CFalse, [] -> t_false
+  | Concrete.CFalse, _ -> raise Abstract_error
+  | Concrete.CNot, [t] -> t_not t
+  | Concrete.CNot, _ -> raise Abstract_error
+  | Concrete.CImply, terms -> mk_right_assoc t_imply terms
+  | Concrete.CAnd, terms -> mk_left_assoc t_and terms
+  | Concrete.COr, terms -> mk_left_assoc t_or terms
+  | Concrete.CXor, terms -> mk_left_assoc t_xor terms
+  | Concrete.CEqual, terms -> mk_chainable t_equal terms
+  | Concrete.CDistinct, terms -> mk_pairwise t_distinct terms
+  | Concrete.CIte, [t1; t2; t3] -> t_ite t1 t2 t3
+  | Concrete.CIte, _ -> raise Abstract_error
+
 and tr_term var_set cterm =
   match cterm with
   | Concrete.Spec_constant_term const ->
      t_app (spec_constant_fun const) None []
-  | Concrete.Qual_identifier_term (((sym, []) as id), None) ->
+  | Concrete.App_term ((((sym, []) as id), None), []) ->
      let var = tr_variable sym in
      if VarSet.mem var var_set
      then t_var var
      else t_app (tr_fun_symbol id) None []
-  | Concrete.Qual_identifier_term (id, opt) ->
-     t_app (tr_fun_symbol id) (Util.option_map tr_sort opt) []
   | Concrete.App_term ((id, opt), cterms) ->
-     (* cannot be a variable because cterms is not empty *)
      t_app (tr_fun_symbol id) (Util.option_map tr_sort opt)
 	  (List.map (tr_term var_set) cterms)
+  | Concrete.Core_app_term (const, cterms) ->
+     tr_core_app var_set const cterms
   | Concrete.Let_term (var_bindings, cterm) ->
      let bindings = List.map (tr_var_binding var_set) var_bindings in
      let vars, _ = List.split bindings in
@@ -279,6 +367,7 @@ let rec substitute_par_sort bindings par_sort =
   | Param par -> List.assoc par bindings
   | Par_sort (sort_sym, par_sorts) -> 
      sort sort_sym (List.map (substitute_par_sort bindings) par_sorts)
+  | Par_bool -> Bool
 
 (* *** CONSTANTS *** *)
 
@@ -320,9 +409,9 @@ let qf_uf_declaration = "QF_UF", ["Core"]
 let get_theory_declaration theory_name =
   match theory_name with
   | "Core" -> core_declaration
-  | _ -> raise Logic_error
+  | _ -> raise Abstract_error
 
 let get_logic_declaration logic_name = 
   match logic_name with
   | "QF_UF" -> qf_uf_declaration 
-  | _ -> raise Logic_error
+  | _ -> raise Abstract_error

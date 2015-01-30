@@ -3,16 +3,12 @@
 exception Signature_error
 
 type sort_data =
-  | Theory_sort_declaration of int
-  | User_sort_declaration of int
+  | Sort_declaration of int
   | Sort_definition of
       Abstract.sort_parameter list * Abstract.parametric_sort
 
 type fun_data =
-  | Theory_fun_declaration of
-      (Abstract.sort_parameter list *
-	 Abstract.parametric_sort list * Abstract.parametric_sort * Abstract.attribute list) list
-  | User_fun_declaration of Abstract.sort list * Abstract.sort
+  | Fun_declaration of Abstract.sort list * Abstract.sort
   | Fun_definition of
       (Abstract.variable * Abstract.sort) list *
 	Abstract.sort * Abstract.term
@@ -43,5 +39,3 @@ val fold_vars:
   (Abstract.variable -> Abstract.sort -> 'a -> 'a) -> signature -> 'a -> 'a
 
 val empty: signature
-
-val logic_signature: Abstract.logic_name -> signature

@@ -5,16 +5,12 @@ exception Signature_error
 module Abs = Abstract
 
 type sort_data =
-  | Theory_sort_declaration of int
-  | User_sort_declaration of int
+  | Sort_declaration of int
   | Sort_definition of
       Abs.sort_parameter list * Abs.parametric_sort
 
 type fun_data =
-  | Theory_fun_declaration of
-      (Abs.sort_parameter list *
-	 Abs.parametric_sort list * Abs.parametric_sort * Abs.attribute list) list
-  | User_fun_declaration of Abs.sort list * Abs.sort
+  | Fun_declaration of Abs.sort list * Abs.sort
   | Fun_definition of
       (Abs.variable * Abs.sort) list *
 	Abs.sort * Abs.term
@@ -45,24 +41,6 @@ type signature = {
   funs: fun_data FunMap.t;
   vars: Abs.sort VarMap.t
 }
-
-(* Internal functions *)
-
-let overload_fun sym data signature =
-  { sorts = signature.sorts;
-    funs =
-      if FunMap.mem sym signature.funs
-      then
-	let envdata = FunMap.find sym signature.funs in
-	match envdata, data with
-	| Theory_fun_declaration l1, Theory_fun_declaration l2 ->
-	   FunMap.add sym (Theory_fun_declaration (l1@l2)) signature.funs
-	| Theory_fun_declaration _, _
-	| User_fun_declaration _ , _
-	| Fun_definition _, _ -> raise Signature_error
-      else FunMap.add sym data signature.funs;
-    vars = signature.vars;
-  }
 
 (* Exported functions *)
     
@@ -111,28 +89,3 @@ let empty =
     funs = FunMap.empty;
     vars = VarMap.empty
   }
-
-let logic_signature logic_name =
-  let _, theory_names = Abs.get_logic_declaration logic_name in
-  let theory_declarations =
-    List.map Abs.get_theory_declaration theory_names in
-  List.fold_left 
-    (fun env th_decl ->
-     let sort_decls, par_fun_decls = 
-       th_decl.Abs.sort_declarations, th_decl.Abs.par_fun_declarations in
-     let newenv = 
-       List.fold_left 
-	 (fun env sort_decl ->
-	  add_sort sort_decl.Abs.sort_symbol (Theory_sort_declaration sort_decl.Abs.number) env) 
-	 env sort_decls in
-     List.fold_left 
-       (fun env par_fun_decl -> 
-        overload_fun
-	  par_fun_decl.Abs.fun_symbol
-	  (Theory_fun_declaration 
-	     [par_fun_decl.Abs.sort_parameters, 
-	      par_fun_decl.Abs.parametric_sorts, 
-	      par_fun_decl.Abs.parametric_sort,
-	      par_fun_decl.Abs.attributes]) env) 
-       newenv par_fun_decls)
-    empty theory_declarations
