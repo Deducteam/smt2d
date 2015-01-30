@@ -4,6 +4,8 @@ exception Translate_error
 
 val tr_string: string -> Dedukti.ident
 
+val tr_sort: Signature.signature -> Abstract.sort -> Dedukti.term
+
 val tr_term: Signature.signature -> Abstract.term -> Dedukti.term
 
 val tr_sort_context: Signature.signature -> Dedukti.line list
