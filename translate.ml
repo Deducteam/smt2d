@@ -52,20 +52,20 @@ let tr_sort_par par =
 let tr_variable var =
   "T"^(tr_identifier (var, []))
 
-let rec tr_sort signature sort =
+let rec tr_sort sort =
   match sort with
   | Abs.Sort (sort_sym, sorts) -> 
-     Dk.app (tr_sort_symbol sort_sym) (List.map (tr_sort signature) sorts)
+     Dk.app (tr_sort_symbol sort_sym) (List.map tr_sort sorts)
   | Abs.Bool -> Dk.l_bool
 
-let rec tr_par_sort signature par_sort =
+let rec tr_par_sort par_sort =
   match par_sort with
   | Abs.Param par ->
      Dk.var (tr_sort_par par)
   | Abs.Par_sort (sort_sym, par_sorts) -> 
      Dk.app 
        (tr_sort_symbol sort_sym) 
-       (List.map (tr_par_sort signature) par_sorts)
+       (List.map tr_par_sort par_sorts)
   | Abs.Par_bool -> Dk.l_bool
 
 let rec tr_core signature core =
@@ -79,16 +79,16 @@ let rec tr_core signature core =
   | Abstract.Xor (t1, t2) -> Dk.l_xor (tr_term signature t1) (tr_term signature t2)
   | Abstract.Equal (t1, t2) -> 
      Dk.l_equal 
-       (tr_sort signature (Get_sort.get_sort signature t1)) 
+       (tr_sort (Get_sort.get_sort signature t1)) 
        (tr_term signature t1) (tr_term signature t2)
   | Abstract.Distinct (t1, t2) -> 
      Dk.l_distinct 
-       (tr_sort signature (Get_sort.get_sort signature t1)) 
+       (tr_sort (Get_sort.get_sort signature t1)) 
        (tr_term signature t1) 
        (tr_term signature t2)
   | Abstract.Ite (t1, t2, t3) -> 
      Dk.l_ite 
-       (tr_sort signature (Get_sort.get_sort signature t1)) 
+       (tr_sort (Get_sort.get_sort signature t1)) 
        (tr_term signature t1) 
        (tr_term signature t2) 
        (tr_term signature t3) 
@@ -117,7 +117,7 @@ and tr_term signature term =
      let dk_term =
        List.fold_left 
 	 (fun dk_term (var, sort) ->
-	  Dk.lam (tr_variable var) (Dk.l_term (tr_sort signature sort)) dk_term) 
+	  Dk.lam (tr_variable var) (Dk.l_term (tr_sort sort)) dk_term) 
 	 (tr_term new_signature term) (List.rev sorted_vars) in 
      Dk.app
        dk_term 
@@ -137,28 +137,28 @@ let tr_user_sort_declaration sort_sym n =
     | _ -> Dk.arrow Dk.l_sort (dk_sort (i-1)) in
   Dk.declaration (tr_sort_symbol sort_sym) (dk_sort n)
 
-let tr_sort_definition signature sort_sym pars par_sort =
-  let dk_par_sort = tr_par_sort signature par_sort in
+let tr_sort_definition sort_sym pars par_sort =
+  let dk_par_sort = tr_par_sort par_sort in
   let dk_sort, dk_term = 
     List.fold_left 
       (fun (sort, term) par -> Dk.arrow Dk.l_sort sort, Dk.lam par Dk.l_sort term) 
       (Dk.l_sort, dk_par_sort) (List.rev pars) in
   Dk.definition (tr_sort_symbol sort_sym) dk_sort dk_term
 
-let tr_user_fun_declaration signature fun_sym sorts sort =
+let tr_user_fun_declaration fun_sym sorts sort =
   Dk.declaration 
     (tr_user_fun_symbol fun_sym) 
     (List.fold_left 
-       (fun dk_sort sort -> (Dk.arrow (Dk.l_term (tr_sort signature sort)) dk_sort)) 
-       (Dk.l_term (tr_sort signature sort)) (List.rev sorts))
+       (fun dk_sort sort -> (Dk.arrow (Dk.l_term (tr_sort sort)) dk_sort)) 
+       (Dk.l_term (tr_sort sort)) (List.rev sorts))
 
 let tr_fun_definition signature fun_sym sorted_vars sort term =
   let dk_sort, new_signature =
     List.fold_left 
       (fun (dk_sort, signature) (var, sort) -> 
-       Dk.arrow (Dk.l_term (tr_sort signature sort)) dk_sort, 
+       Dk.arrow (Dk.l_term (tr_sort sort)) dk_sort, 
        Signature.add_var var sort signature)
-      (Dk.l_term (tr_sort signature sort), signature) (List.rev sorted_vars) in
+      (Dk.l_term (tr_sort sort), signature) (List.rev sorted_vars) in
   let dk_term = tr_term new_signature term in
   Dk.definition (tr_user_fun_symbol fun_sym) dk_sort dk_term
 
@@ -170,7 +170,7 @@ let tr_sort_context signature =
        | Signature.Sort_declaration n ->
 	  tr_user_sort_declaration sort_sym n :: lines
        | Signature.Sort_definition (pars, par_sort) ->
-	  tr_sort_definition signature sort_sym pars par_sort :: lines) signature [] in
+	  tr_sort_definition sort_sym pars par_sort :: lines) signature [] in
   List.rev lines
 
 let tr_fun_context signature =
@@ -179,7 +179,7 @@ let tr_fun_context signature =
       (fun fun_sym fun_data lines ->
        match fun_data with
        | Signature.Fun_declaration (sorts, sort) ->
-	  tr_user_fun_declaration signature fun_sym sorts sort :: lines
+	  tr_user_fun_declaration fun_sym sorts sort :: lines
        | Signature.Fun_definition (sorted_vars, sort, term) ->
 	  tr_fun_definition signature fun_sym sorted_vars sort term :: lines) signature [] in
   List.rev lines
