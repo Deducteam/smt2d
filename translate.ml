@@ -95,18 +95,14 @@ let rec tr_core signature core =
 
 and tr_term signature term =
   match term with
-  | Abs.Var var -> Dk.var (tr_variable var)
+  | Abs.Var var -> 
+     Dk.var (tr_variable var)
   | Abs.App (fun_sym, _, terms) ->
-     begin
-       match Signature.find_fun_data fun_sym signature with
-       | Signature.Fun_declaration _ 
-       | Signature.Fun_definition _ ->
-       	  Dk.app (tr_user_fun_symbol fun_sym)
-       		 (List.map (tr_term signature) terms) end
+     Dk.app (tr_user_fun_symbol fun_sym) (List.map (tr_term signature) terms)
   | Abs.Core core -> 
-     tr_core signature core
+	tr_core signature core
   | Abs.Let (bindings, term) ->
-     let sorted_vars = 
+    let sorted_vars = 
        List.map 
 	 (fun (var, term) ->
 	 var, Get_sort.get_sort signature term) bindings in
