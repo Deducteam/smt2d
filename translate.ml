@@ -40,7 +40,7 @@ let tr_identifier (sym, nums) =
 let tr_sort_symbol sort_sym =
   Dk.var ("S"^(tr_identifier sort_sym))
 
-let tr_user_fun_symbol fun_sym =
+let tr_fun_symbol fun_sym =
   match fun_sym with
   | Abs.Identifier_fun ident ->
      Dk.var ("T"^(tr_identifier ident))
@@ -98,7 +98,7 @@ and tr_term signature term =
   | Abs.Var var ->
      Dk.var (tr_variable var)
   | Abs.App (fun_sym, _, terms) ->
-     Dk.app (tr_user_fun_symbol fun_sym) (List.map (tr_term signature) terms)
+     Dk.app (tr_fun_symbol fun_sym) (List.map (tr_term signature) terms)
   | Abs.Core core -> 
       tr_core signature core
   | Abs.Let (bindings, term) ->
@@ -141,9 +141,9 @@ let tr_sort_definition sort_sym pars par_sort =
       (Dk.l_sort, dk_par_sort) (List.rev pars) in
   Dk.definition (tr_sort_symbol sort_sym) dk_sort dk_term
 
-let tr_user_fun_declaration fun_sym sorts sort =
+let tr_fun_declaration fun_sym sorts sort =
   Dk.declaration 
-    (tr_user_fun_symbol fun_sym) 
+    (tr_fun_symbol fun_sym) 
     (List.fold_left 
        (fun dk_sort sort -> (Dk.arrow (Dk.l_term (tr_sort sort)) dk_sort)) 
        (Dk.l_term (tr_sort sort)) (List.rev sorts))
@@ -156,7 +156,7 @@ let tr_fun_definition signature fun_sym sorted_vars sort term =
        Signature.add_var var sort signature)
       (Dk.l_term (tr_sort sort), signature) (List.rev sorted_vars) in
   let dk_term = tr_term new_signature term in
-  Dk.definition (tr_user_fun_symbol fun_sym) dk_sort dk_term
+  Dk.definition (tr_fun_symbol fun_sym) dk_sort dk_term
 
 let tr_sort_context signature =
   let lines =
@@ -175,7 +175,7 @@ let tr_fun_context signature =
       (fun fun_sym fun_data lines ->
        match fun_data with
        | Signature.Fun_declaration (sorts, sort) ->
-	  tr_user_fun_declaration fun_sym sorts sort :: lines
+	  tr_fun_declaration fun_sym sorts sort :: lines
        | Signature.Fun_definition (sorted_vars, sort, term) ->
 	  tr_fun_definition signature fun_sym sorted_vars sort term :: lines) signature [] in
   List.rev lines
