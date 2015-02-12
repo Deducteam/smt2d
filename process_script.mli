@@ -1,7 +1,6 @@
 exception Script_error
 
+(* parses the whole file *)
 val get_script: Lexing.lexbuf -> Abstract.script
 
-val get_contexts: Lexing.lexbuf -> (Signature.signature * Abstract.term list) list
-
-val get_unique_context: Lexing.lexbuf -> Signature.signature * Abstract.term list
+val get_context: Lexing.lexbuf -> Signature.signature * Abstract.term list

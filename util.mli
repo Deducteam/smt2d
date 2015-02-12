@@ -1,3 +1,5 @@
+(* utils *)
+
 exception Util_error
 
 val option_map: ('a -> 'b) -> 'a option -> 'b option

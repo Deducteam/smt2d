@@ -1,3 +1,5 @@
+(* raise and print errors *)
+
 open Printf
 open Lexing
 

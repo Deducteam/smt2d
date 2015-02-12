@@ -1,3 +1,6 @@
+(* checks process_script and translate main functions 
+   - not part of the smt2d library *)
+
 exception Check_error
 
 let umsg = "Usage: check <files>"
@@ -16,7 +19,7 @@ let apply_script_processing proc file =
 let check_file file =
   let modname = Translate.tr_string (Filename.chop_extension (Filename.basename file)) in
   let prelude = Dedukti.prelude modname in
-  let signature, assertions = apply_script_processing Process_script.get_unique_context file in
+  let signature, assertions = apply_script_processing Process_script.get_context file in
   let sort_context = Translate.tr_sort_context signature in
   let fun_context = Translate.tr_fun_context signature in
   let assertion_bindings = 

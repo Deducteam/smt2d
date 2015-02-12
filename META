@@ -1,6 +1,4 @@
 name = "smt2d"
-description = "SMTLIB2 to Dedukti"
-requires = ""
+description = "SMTLIB2 to Dedukti library"
 archive(byte) = "smt2d.cma"
 archive(native) = "smt2d.cmxa"
-version = "0.0.1"

@@ -2,7 +2,7 @@
 
 exception Abstract_error
 
-(* STRUCTURE and building functions *)
+(* *** STRUCTURE AND CONSTRUCTORS *** *)
 
 (* Basic types *)
 
@@ -150,40 +150,20 @@ val c_exit: command
 
 type script = command list
       
-(* *** CONCRETE TO ABSTRACT *** *)
+(* *** TRANSLATE CONCRETE TO ABSTRACT *** *)
 
 type varset
 
 val empty_vars: varset
        
-val tr_term: varset -> Concrete.term -> term
+val mk_term: varset -> Concrete.term -> term
 		      
-val tr_command: Concrete.command -> command
+val mk_command: Concrete.command -> command
 
 (* *** UTILS *** *)
 
+(* from parameter/sort bindings and a parametric sort, computes the corresponding sort *)
 val substitute_par_sort: (sort_parameter * sort) list -> parametric_sort -> sort
 
-(* *** CONSTANTS *** *)
-
-val bool_sym: sort_symbol
-val true_sym: fun_symbol
-val false_sym: fun_symbol
-val not_sym: fun_symbol
-val imply_sym: fun_symbol
-val and_sym: fun_symbol
-val or_sym: fun_symbol
-val xor_sym: fun_symbol
-val equal_sym: fun_symbol
-val distinct_sym: fun_symbol
-val ite_sym: fun_symbol
-
-val core_declaration: theory_declaration
-val qf_uf_declaration: logic_declaration  
-
-(* Get theories and logics declarations from their names *)
-
-val get_theory_declaration:
-  theory_name -> theory_declaration
-val get_logic_declaration:
-  logic_name -> logic_declaration
+(* from parameter sort/sort bindings and a parameter, computes the corresponding sort*)
+val match_par_sort: (parametric_sort * sort) list -> sort_parameter -> sort

@@ -2,6 +2,8 @@
 
 exception Abstract_error
 
+(* *** STRUCTURE AND CONSTRUCTORS *** *)
+
 (* Basic types *)
 
 type number = int
@@ -156,7 +158,7 @@ let c_exit : command = Exit
 
 type script = command list
 
-(* *** CONCRETE TO ABSTRACT *** *)
+(* *** TRANSLATE CONCRETE TO ABSTRACT *** *)
 
 (* Functions removing chainable, left-assoc, right-assoc, and pairwise syntactic sugar *)
 						   
@@ -214,34 +216,34 @@ let add_vars vars var_set =
 
 (* Translation functions from concrete to abstract syntax *)
     
-let tr_number num = int_of_string num
-let tr_sort_symbol id = id
-let tr_fun_symbol id = identifier_fun id
-let tr_attribute_name cattr = cattr
-let tr_sort_parameter sym = sym
-let tr_variable sym = sym
-let tr_logic_name sym = sym
+let mk_number num = int_of_string num
+let mk_sort_symbol id = id
+let mk_fun_symbol id = identifier_fun id
+let mk_attribute_name cattr = cattr
+let mk_sort_parameter sym = sym
+let mk_variable sym = sym
+let mk_logic_name sym = sym
 
 (* Sorts *)
 
-let rec tr_sort csort =
+let rec mk_sort csort =
   match csort with
   | Concrete.Sort (id, csorts) ->
-     sort (tr_sort_symbol id) (List.map tr_sort csorts)
+     sort (mk_sort_symbol id) (List.map mk_sort csorts)
   | Concrete.Core_sort (Concrete.CBool, csorts) ->
      match csorts with
      | [] -> bool
      | _ -> raise Abstract_error
 
-let rec tr_parametric_sort pars csort =
+let rec mk_parametric_sort pars csort =
   match csort with
   | Concrete.Sort ((sym, []), []) ->
-     let par = tr_sort_parameter sym in
+     let par = mk_sort_parameter sym in
      if List.mem par pars
      then param par
-     else par_sort (tr_sort_symbol (sym, [])) []
+     else par_sort (mk_sort_symbol (sym, [])) []
   | Concrete.Sort (id, csorts) ->
-     par_sort (tr_sort_symbol id) (List.map (tr_parametric_sort pars) csorts)
+     par_sort (mk_sort_symbol id) (List.map (mk_parametric_sort pars) csorts)
   | Concrete.Core_sort (Concrete.CBool, csorts) ->
      match csorts with
      | [] -> par_bool
@@ -249,15 +251,15 @@ let rec tr_parametric_sort pars csort =
 
 (* Terms *)
 	      
-let tr_attribute (key, opt) = key, opt
+let mk_attribute (key, opt) = key, opt
 				  
-let tr_sorted_var (sym, csort) = tr_variable sym, tr_sort csort
+let mk_sorted_var (sym, csort) = mk_variable sym, mk_sort csort
 
-let rec tr_var_binding var_set (sym, cterm) =
-  tr_variable sym, tr_term var_set cterm
+let rec mk_var_binding var_set (sym, cterm) =
+  mk_variable sym, mk_term var_set cterm
 
-and tr_core_app var_set const cterms =
-  match const, List.map (tr_term var_set) cterms with
+and mk_core_app var_set const cterms =
+  match const, List.map (mk_term var_set) cterms with
   | Concrete.CTrue, [] -> t_true
   | Concrete.CTrue, _ -> raise Abstract_error
   | Concrete.CFalse, [] -> t_false
@@ -273,74 +275,74 @@ and tr_core_app var_set const cterms =
   | Concrete.CIte, [t1; t2; t3] -> t_ite t1 t2 t3
   | Concrete.CIte, _ -> raise Abstract_error
 
-and tr_term var_set cterm =
+and mk_term var_set cterm =
   match cterm with
   | Concrete.Spec_constant_term const ->
      t_app (spec_constant_fun const) None []
   | Concrete.App_term ((((sym, []) as id), None), []) ->
-     let var = tr_variable sym in
+     let var = mk_variable sym in
      if VarSet.mem var var_set
      then t_var var
-     else t_app (tr_fun_symbol id) None []
+     else t_app (mk_fun_symbol id) None []
   | Concrete.App_term ((id, opt), cterms) ->
-     t_app (tr_fun_symbol id) (Util.option_map tr_sort opt)
-	  (List.map (tr_term var_set) cterms)
+     t_app (mk_fun_symbol id) (Util.option_map mk_sort opt)
+	  (List.map (mk_term var_set) cterms)
   | Concrete.Core_app_term (const, cterms) ->
-     tr_core_app var_set const cterms
+     mk_core_app var_set const cterms
   | Concrete.Let_term (var_bindings, cterm) ->
-     let bindings = List.map (tr_var_binding var_set) var_bindings in
+     let bindings = List.map (mk_var_binding var_set) var_bindings in
      let vars, _ = List.split bindings in
-     t_let bindings (tr_term (add_vars vars var_set) cterm)
+     t_let bindings (mk_term (add_vars vars var_set) cterm)
   | Concrete.Forall_term (csorted_vars, cterm) ->
-     let sorted_vars = List.map tr_sorted_var csorted_vars in
+     let sorted_vars = List.map mk_sorted_var csorted_vars in
      let vars, _ = List.split sorted_vars in
-     t_forall sorted_vars (tr_term (add_vars vars var_set) cterm)
+     t_forall sorted_vars (mk_term (add_vars vars var_set) cterm)
   | Concrete.Exists_term (csorted_vars, cterm) ->
-     let sorted_vars = List.map tr_sorted_var csorted_vars in
+     let sorted_vars = List.map mk_sorted_var csorted_vars in
      let vars, _ = List.split sorted_vars in
-     t_exists sorted_vars (tr_term (add_vars vars var_set) cterm)
+     t_exists sorted_vars (mk_term (add_vars vars var_set) cterm)
   | Concrete.Attributed_term (cterm, cattributes) ->
-     t_attributed (tr_term var_set cterm) (List.map tr_attribute cattributes)
+     t_attributed (mk_term var_set cterm) (List.map mk_attribute cattributes)
 
 (* Command options and info names *)
 
-let tr_command_option copt = tr_attribute copt
+let mk_command_option copt = mk_attribute copt
 
-let tr_info_flag cflag = cflag
+let mk_info_flag cflag = cflag
 
 (* Commands *)
 	    
-let tr_command ccommand =
+let mk_command ccommand =
   match ccommand with
   | Concrete.Set_logic (sym) ->
-     c_set_logic (tr_logic_name sym)
+     c_set_logic (mk_logic_name sym)
   | Concrete.Set_option (copt) ->
-     c_set_option (tr_command_option copt)
+     c_set_option (mk_command_option copt)
   | Concrete.Set_info (cattribute) ->
-     c_set_info (tr_attribute cattribute)
+     c_set_info (mk_attribute cattribute)
   | Concrete.Declare_sort (sym, num) ->
-     c_declare_sort (tr_sort_symbol (sym, [])) (tr_number num)
+     c_declare_sort (mk_sort_symbol (sym, [])) (mk_number num)
   | Concrete.Define_sort (sym, syms, csort) ->
-     let pars = List.map tr_sort_parameter syms in
+     let pars = List.map mk_sort_parameter syms in
      c_define_sort
-       (sym, []) pars (tr_parametric_sort pars csort)
+       (sym, []) pars (mk_parametric_sort pars csort)
   | Concrete.Declare_fun (sym, csorts, csort) -> 
      c_declare_fun
-       (tr_fun_symbol (sym, []))
-	(List.map tr_sort csorts) (tr_sort csort) 
+       (mk_fun_symbol (sym, []))
+	(List.map mk_sort csorts) (mk_sort csort) 
   | Concrete.Define_fun (sym, csorted_vars, csort, cterm) -> 
-     let sorted_vars = List.map tr_sorted_var csorted_vars in
+     let sorted_vars = List.map mk_sorted_var csorted_vars in
      let vars, _ = List.split sorted_vars in
      c_define_fun
-       (tr_fun_symbol (sym, []))
-	sorted_vars (tr_sort csort)
-	(tr_term (add_vars vars VarSet.empty) cterm)
+       (mk_fun_symbol (sym, []))
+	sorted_vars (mk_sort csort)
+	(mk_term (add_vars vars VarSet.empty) cterm)
   | Concrete.Push (num) -> 
-     c_push (tr_number num)
+     c_push (mk_number num)
   | Concrete.Pop (num) -> 
-     c_pop (tr_number num)
+     c_pop (mk_number num)
   | Concrete.Assert (cterm) -> 
-     c_assert (tr_term VarSet.empty cterm)
+     c_assert (mk_term VarSet.empty cterm)
   | Concrete.Check_sat -> 
      c_check_sat
   | Concrete.Get_assertions -> 
@@ -350,18 +352,19 @@ let tr_command ccommand =
   | Concrete.Get_unsat_core -> 
      c_get_unsat_core
   | Concrete.Get_value (cterms) -> 
-     c_get_value (List.map (tr_term VarSet.empty) cterms)
+     c_get_value (List.map (mk_term VarSet.empty) cterms)
   | Concrete.Get_assignment -> 
      c_get_assignment
   | Concrete.Get_option (key) -> 
-     c_get_option (tr_attribute_name key)
+     c_get_option (mk_attribute_name key)
   | Concrete.Get_info (cinfo_flag) -> 
-     c_get_info (tr_info_flag cinfo_flag)
+     c_get_info (mk_info_flag cinfo_flag)
   | Concrete.Exit -> 
      c_exit
        
 (* *** UTILS *** *)
 
+(* from parameter/sort bindings and a parametric sort, computes the corresponding sort *)
 let rec substitute_par_sort bindings par_sort =
   match par_sort with
   | Param par -> List.assoc par bindings
@@ -369,49 +372,18 @@ let rec substitute_par_sort bindings par_sort =
      sort sort_sym (List.map (substitute_par_sort bindings) par_sorts)
   | Par_bool -> Bool
 
-(* *** CONSTANTS *** *)
-
-let bool_sym = "Bool", []
-let true_sym = identifier_fun ("true", [])
-let false_sym = identifier_fun ("false", [])
-let not_sym = identifier_fun ("not", [])
-let imply_sym = identifier_fun ("=>", [])
-let and_sym = identifier_fun ("and", [])
-let or_sym = identifier_fun ("or", [])
-let xor_sym = identifier_fun ("xor", [])
-let equal_sym = identifier_fun ("=", [])
-let distinct_sym = identifier_fun ("distinct", [])
-let ite_sym = identifier_fun ("ite", [])
-
-let core_declaration =
-  let a_sym = "A" in
-  let bool_sort = par_sort bool_sym [] in
-  let a_sort = param a_sym in
-  let sort_decls = [sort_declaration bool_sym 0 []] in
-  let par_fun_decls =
-    [ par_fun_declaration [] true_sym [] bool_sort []
-    ; par_fun_declaration [] false_sym [] bool_sort []
-    ; par_fun_declaration [] not_sym [bool_sort] bool_sort []
-    ; par_fun_declaration [] imply_sym [bool_sort; bool_sort] bool_sort [":right-assoc", None]
-    ; par_fun_declaration [] and_sym [bool_sort; bool_sort] bool_sort [":left-assoc", None]
-    ; par_fun_declaration [] or_sym [bool_sort; bool_sort] bool_sort [":left-assoc", None]
-    ; par_fun_declaration [] xor_sym [bool_sort; bool_sort] bool_sort [":left-assoc", None]
-    ; par_fun_declaration [a_sym] equal_sym [a_sort; a_sort] bool_sort [":chainable", None]
-    ; par_fun_declaration [a_sym] distinct_sym [a_sort; a_sort] bool_sort [":pairwise", None]
-    ; par_fun_declaration [a_sym] ite_sym [bool_sort; a_sort; a_sort] a_sort []
-    ] in
-    theory_declaration "Core" sort_decls par_fun_decls 
-
-let qf_uf_declaration = "QF_UF", ["Core"]
-
-(* Get theories and logics declarations from their names *)
-
-let get_theory_declaration theory_name =
-  match theory_name with
-  | "Core" -> core_declaration
-  | _ -> raise Abstract_error
-
-let get_logic_declaration logic_name = 
-  match logic_name with
-  | "QF_UF" -> qf_uf_declaration 
-  | _ -> raise Abstract_error
+(* from parameter sort/sort bindings and a parameter, computes the corresponding sort*)
+let rec match_par_sort bindings param =
+  match bindings with
+  | (Param p, sort) :: bindings -> 
+     if p = param 
+     then sort
+     else match_par_sort bindings param
+  | (Par_sort (_, par_sorts), Sort ( _, sorts)) :: bindings -> 
+     let newbindings = List.combine par_sorts sorts in 
+     match_par_sort (newbindings@bindings) param
+  | (Par_bool, Bool) :: bindings ->
+     match_par_sort bindings param
+  | (Par_sort _, Bool) :: _ 
+  | (Par_bool, _) :: _ 
+  | [] -> raise Abstract_error

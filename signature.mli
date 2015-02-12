@@ -15,7 +15,6 @@ type fun_data =
 		      
 type signature
 
-(* no shadowing/overloading accepting *)
 val add_sort:
   Abstract.sort_symbol -> sort_data -> signature -> signature
 val add_fun:

@@ -8,7 +8,6 @@ type sort_data =
   | Sort_declaration of int
   | Sort_definition of
       Abs.sort_parameter list * Abs.parametric_sort
-
 type fun_data =
   | Fun_declaration of Abs.sort list * Abs.sort
   | Fun_definition of
@@ -21,14 +20,12 @@ module SortMap =
       type t = Abs.sort_symbol
       let compare = Pervasives.compare
     end)
-
 module FunMap =
   Map.Make
     (struct
       type t = Abs.fun_symbol
       let compare = Pervasives.compare
     end)
-
 module VarMap =
   Map.Make
     (struct
@@ -42,8 +39,7 @@ type signature = {
   vars: Abs.sort VarMap.t
 }
 
-(* Exported functions *)
-    
+(* Exported functions *)    
 let add_sort sym data signature =
   { sorts =
       if SortMap.mem sym signature.sorts
@@ -52,7 +48,6 @@ let add_sort sym data signature =
     funs = signature.funs;
     vars = signature.vars;
   }
-
 let add_fun sym data signature =
   { sorts = signature.sorts;
     funs =
@@ -61,7 +56,6 @@ let add_fun sym data signature =
       else FunMap.add sym data signature.funs;
     vars = signature.vars;
   }
-
 let add_var var sort signature =
   { sorts = signature.sorts;
     funs = signature.funs;
@@ -70,10 +64,8 @@ let add_var var sort signature =
 
 let find_sort_data sort_sym signature =
   SortMap.find sort_sym signature.sorts
-
 let find_fun_data fun_sym signature =
   FunMap.find fun_sym signature.funs
-
 let find_var_sort var signature =
   VarMap.find var signature.vars
     

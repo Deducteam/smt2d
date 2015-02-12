@@ -1,4 +1,4 @@
-.PHONY: all lib install clean bench cleanbench
+.PHONY: all lib check install clean bench cleanbench
 
 SMTLIBDIR = smtlib2/QF_UF/PEQ
 BENCHDIR = bench

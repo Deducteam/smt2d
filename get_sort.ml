@@ -1,6 +1,4 @@
-(* find sorts of terms *)
-
-exception Sort_error
+(* compute sorts of terms *)
 
 module Abs = Abstract
 
@@ -50,18 +48,3 @@ and get_sort signature term =
      get_sort newsignature term
   | Abs.Attributed (term, _) -> 
      get_sort signature term
-
-let rec get_par_sort signature par par_sorts sorts =
-  match par_sorts, sorts with
-  | Abs.Param p :: par_sorts, sort :: sorts -> 
-     if p = par 
-     then sort
-     else get_par_sort signature par par_sorts sorts
-  | Abs.Par_sort (_, p_sorts) :: par_sorts, 
-    Abs.Sort ( _, sort_args) :: sorts -> 
-     get_par_sort signature par (p_sorts @ par_sorts) (sort_args @ sorts)
-  | Abs.Par_bool :: par_sorts, Abs.Bool :: sorts ->
-     get_par_sort signature par par_sorts sorts
-  | Abs.Par_sort _ :: _, Abs.Bool :: _ 
-  | Abs.Par_bool :: _, _ 
-  | [], _ | _, [] -> raise Sort_error
