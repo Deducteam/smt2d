@@ -126,7 +126,7 @@ let print_line out line =
       print_term t
       print_term term
   | Definition (t, typeterm, term) ->
-    fprintf out "%a: %a:= %a.\n"
+    fprintf out "def %a: %a:= %a.\n"
       print_term t
       print_term typeterm
       print_term term
